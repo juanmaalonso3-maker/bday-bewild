@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Gestor de clientes y cumpleaños — BE WILD">
+  <title>BE WILD · Clientes</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- ══ Selector de terminal (primer arranque) ══════════════════════════ -->
+  <div id="modal-terminal" class="modal" hidden>
+    <div class="modal__caja">
+      <p class="modal__eyebrow">Primer ingreso en esta computadora</p>
+      <h2 class="modal__titulo">¿Desde dónde vas a cargar?</h2>
+      <p class="modal__texto">
+        Queda guardado en esta computadora y se registra en cada cliente que cargues.
+        Lo podés cambiar después desde el encabezado.
+      </p>
+      <div id="terminal-opciones" class="modal__opciones"></div>
+    </div>
+  </div>
+
+  <!-- ══ Layout principal ════════════════════════════════════════════════ -->
+  <div class="layout">
+
+    <!-- Barra lateral -->
+    <aside class="sidebar">
+      <div class="sidebar__marca">
+        <span class="sidebar__wordmark">BE WILD</span>
+        <span class="sidebar__sub">Clientes</span>
+      </div>
+
+      <nav class="nav" id="nav-principal" aria-label="Secciones principales"></nav>
+
+      <div class="nav__grupo-titulo">Sistema</div>
+      <nav class="nav" id="nav-sistema" aria-label="Sistema"></nav>
+
+      <div class="sidebar__pie">
+        <span id="version-app">v—</span>
+      </div>
+    </aside>
+
+    <!-- Contenido -->
+    <div class="principal">
+
+      <header class="topbar">
+        <div class="topbar__izq">
+          <h1 class="topbar__titulo" id="titulo-vista">—</h1>
+          <span class="topbar__fecha" id="fecha-hoy"></span>
+        </div>
+
+        <div class="topbar__der">
+          <div class="estado" id="estado-conexion" role="status" aria-live="polite">
+            <span class="estado__punto"></span>
+            <span class="estado__texto">Conectando…</span>
+          </div>
+
+          <button class="terminal" id="btn-terminal" type="button" title="Cambiar terminal">
+            <span class="terminal__etiqueta">Terminal</span>
+            <span class="terminal__valor" id="terminal-actual">—</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="contenido" id="contenido" tabindex="-1"></main>
+
+    </div>
+  </div>
+
+  <!-- Avisos flotantes -->
+  <div class="avisos" id="avisos" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
