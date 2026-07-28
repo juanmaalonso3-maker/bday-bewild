@@ -42,6 +42,7 @@ cumpleaños por WhatsApp.
 | `view-logs.js` | Registro de errores |
 | `view-ajustes.js` | Plantilla de WhatsApp y terminal |
 | `plantilla.js` | Mensaje de cumpleaños (hoja Config) |
+| `utils-csv.js` | Exportación a CSV compatible con Excel |
 
 ## Etapas
 
@@ -50,5 +51,5 @@ cumpleaños por WhatsApp.
 - [x] 3 · Núcleo: cache local, cola de sincronización y logs
 - [x] 4 · Carga de clientes
 - [x] 5 · Cumpleaños del mes + WhatsApp
-- [ ] 6 · Base de datos
-- [ ] 7 · Dashboard y registro
+- [x] 6 · Base de datos
+- [x] 7 · Dashboard y registro

@@ -850,3 +850,194 @@ button { font-family: inherit; font-size: inherit; cursor: pointer; }
 
 /* El campo de nombre unificado ocupa más lugar que los otros. */
 .campo--nombre { grid-column: span 4; }
+
+/* ==========================================================================
+   BASE DE DATOS, DASHBOARD Y REGISTRO
+   Agregado en las Etapas 6 y 7.
+   ========================================================================== */
+
+/* ── Barra de herramientas ──────────────────────────────────────────────── */
+.barra-herramientas {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  margin-bottom: var(--e4);
+  flex-wrap: wrap;
+}
+
+.entrada--busqueda {
+  flex: 1;
+  min-width: 220px;
+  max-width: 420px;
+}
+
+.acciones--compactas { margin-top: 0; gap: var(--e2); }
+
+.tabla-scroll { overflow-x: auto; }
+
+/* ── Encabezados ordenables ─────────────────────────────────────────────── */
+.th-ordenable {
+  cursor: pointer;
+  user-select: none;
+  transition: color var(--transicion);
+}
+
+.th-ordenable:hover { color: var(--texto); }
+.th--activa { color: var(--texto); }
+
+/* ── Botones de acción en fila ──────────────────────────────────────────── */
+.boton-icono {
+  font-family: var(--texto-familia);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border: 1px solid var(--borde-fuerte);
+  background: var(--blanco);
+  color: var(--texto-suave);
+  transition: all var(--transicion);
+}
+
+.boton-icono:hover { border-color: var(--negro); color: var(--texto); }
+.boton-icono--peligro:hover { background: var(--error); border-color: var(--error); color: var(--blanco); }
+
+.tabla__acciones { white-space: nowrap; }
+.tabla__acciones .boton-icono + .boton-icono { margin-left: 4px; }
+
+.ok-mini { color: var(--ok); font-weight: 700; }
+
+.celda-detalle {
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tabla--logs code {
+  font-size: 11px;
+  background: var(--fondo);
+  padding: 1px 5px;
+  border: 1px solid var(--borde);
+}
+
+.chip[data-nivel-log="ERROR"] { color: var(--error);  border-color: #F5C2C2; background: var(--error-fondo); }
+.chip[data-nivel-log="WARN"]  { color: var(--alerta); border-color: #F5DDB0; background: var(--alerta-fondo); }
+.chip[data-nivel-log="INFO"]  { color: var(--texto-suave); }
+
+/* ── Formulario dentro del modal ────────────────────────────────────────── */
+.formulario--modal { grid-template-columns: 1fr; gap: var(--e3); }
+.formulario--modal .campo { grid-column: span 1 !important; }
+
+/* ── Indicadores del dashboard ──────────────────────────────────────────── */
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--e4);
+  margin-bottom: var(--e5);
+}
+
+.indicador {
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  padding: var(--e5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
+
+.indicador[role="button"] { cursor: pointer; transition: border-color var(--transicion); }
+.indicador[role="button"]:hover { border-color: var(--negro); }
+
+.indicador__valor {
+  font-family: var(--display);
+  font-size: 46px;
+  font-weight: 700;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+
+.indicador__titulo {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  font-weight: 600;
+}
+
+.indicador--destacado { background: var(--negro); border-color: var(--negro); color: var(--blanco); }
+.indicador--destacado .indicador__titulo { color: rgba(255, 255, 255, 0.6); }
+
+.indicador--alerta { border-color: var(--alerta); }
+.indicador--alerta .indicador__valor { color: var(--alerta); }
+
+/* ── Paneles y gráficos ─────────────────────────────────────────────────── */
+.paneles { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e4); }
+
+.grafico { display: flex; flex-direction: column; gap: var(--e2); }
+
+.grafico__svg {
+  width: 100%;
+  height: 160px;
+  display: block;
+  border-bottom: 1px solid var(--negro);
+}
+
+.barra { fill: var(--negro); }
+.barra[data-cantidad="0"] { fill: var(--borde); }
+
+.grafico__eje {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--texto-tenue);
+}
+
+.grafico__max { color: var(--texto-suave); }
+
+.barras-mes {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 4px;
+  align-items: end;
+  height: 190px;
+}
+
+.barra-mes { display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
+
+.barra-mes__valor {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--texto-suave);
+  height: 14px;
+}
+
+.barra-mes__caja {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  background: var(--fondo);
+}
+
+.barra-mes__relleno { width: 100%; background: var(--negro); min-height: 2px; }
+
+.barra-mes__nombre {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--texto-tenue);
+}
+
+.barra-mes--actual .barra-mes__nombre { color: var(--texto); font-weight: 700; }
+.barra-mes--actual .barra-mes__relleno { background: var(--alerta); }
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .indicadores { grid-template-columns: repeat(2, 1fr); }
+  .paneles { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 700px) {
+  .indicadores { grid-template-columns: 1fr; }
+  .indicador__valor { font-size: 36px; }
+  .barras-mes { height: 150px; }
+}
