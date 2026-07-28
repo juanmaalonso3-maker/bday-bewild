@@ -13,7 +13,8 @@
 import { clientes as almacen, nuevoId } from './db.js';
 import * as sync from './sync.js';
 import { log } from './logger.js';
-import { ahoraISO, hoyISO, parseFechaNac, proximoCumple, contactadoEsteAnio } from './utils-fecha.js';
+import { ahoraISO, hoyISO, parseFechaNac, proximoCumple, contactadoEsteAnio,
+         normalizarFechaHora, normalizarFecha } from './utils-fecha.js';
 import { normalizar } from './utils-telefono.js';
 import * as terminal from './ui-terminal.js';
 
@@ -128,12 +129,19 @@ function decorar(c) {
   const nacimiento = parseFechaNac(c.fechaNacimiento);
   const cumple = nacimiento.valida ? proximoCumple(nacimiento) : null;
 
+  // Las fechas se unifican en la lectura: pueden venir de la planilla en
+  // formatos distintos según cómo las haya guardado Sheets.
+  const fechaAlta = normalizarFechaHora(c.fechaAlta);
+  const ultimoContacto = normalizarFecha(c.ultimoContacto);
+
   return {
     ...c,
+    fechaAlta,
+    ultimoContacto,
     nombreCompleto: `${c.nombre || ''} ${c.apellido || ''}`.trim(),
     nacimiento,
     cumple,
-    contactado: contactadoEsteAnio(c.ultimoContacto),
+    contactado: contactadoEsteAnio(ultimoContacto),
     estadoSync: c._sync || sync.ESTADOS.SINCRONIZADO
   };
 }

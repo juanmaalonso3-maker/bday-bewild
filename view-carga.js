@@ -44,13 +44,9 @@ function plantilla() {
 
       <div class="formulario" id="form-cliente">
         <div class="campo campo--nombre">
-          <label for="f-nombre">Nombre</label>
-          <input id="f-nombre" type="text" autocomplete="off" spellcheck="false" maxlength="40">
-        </div>
-
-        <div class="campo campo--apellido">
-          <label for="f-apellido">Apellido</label>
-          <input id="f-apellido" type="text" autocomplete="off" spellcheck="false" maxlength="40">
+          <label for="f-nombre">Nombre y apellido</label>
+          <input id="f-nombre" type="text" autocomplete="off" spellcheck="false" maxlength="80"
+                 placeholder="Juana Pérez">
         </div>
 
         <div class="campo campo--fecha">
@@ -102,7 +98,7 @@ function plantilla() {
 const $ = id => document.getElementById(id);
 
 function conectarFormulario() {
-  const campos = ['f-nombre', 'f-apellido', 'f-fecha', 'f-celular', 'f-notas'];
+  const campos = ['f-nombre', 'f-fecha', 'f-celular', 'f-notas'];
 
   // Enter encadena los campos; en el último, guarda.
   campos.forEach((id, i) => {
@@ -174,8 +170,11 @@ function leerFormulario() {
   }
 
   return {
+    // Nombre y apellido van juntos en un solo campo: en el mostrador se escribe
+    // de corrido y separarlos obligaba a decidir dónde termina uno y empieza
+    // el otro, algo que falla con nombres compuestos.
     nombre: $('f-nombre').value.trim(),
-    apellido: $('f-apellido').value.trim(),
+    apellido: '',
     fechaNacimiento,
     celular: $('f-celular').value.trim(),
     notas: $('f-notas').value.trim()
@@ -210,7 +209,7 @@ function frenar(idCampo, mensaje) {
 }
 
 function limpiarFormulario() {
-  ['f-nombre', 'f-apellido', 'f-fecha', 'f-celular', 'f-notas'].forEach(id => { $(id).value = ''; });
+  ['f-nombre', 'f-fecha', 'f-celular', 'f-notas'].forEach(id => { $(id).value = ''; });
   $('f-sin-anio').checked = false;
   $('f-fecha').hidden = false;
   $('sin-anio-campos').hidden = true;

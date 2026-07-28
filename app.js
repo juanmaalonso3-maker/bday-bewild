@@ -16,6 +16,7 @@ import * as store from './store.js';
 import * as sync from './sync.js';
 import { log } from './logger.js';
 import { contactadoEsteAnio } from './utils-fecha.js';
+import * as plantilla from './plantilla.js';
 
 import carga      from './view-carga.js';
 import cumpleanos from './view-cumpleanos.js';
@@ -58,6 +59,10 @@ async function iniciar() {
   verificarBackend();
   vigilarConexion();
   refrescoPeriodico();
+
+  // El mensaje de WhatsApp se precarga en segundo plano: si falla, se usa el
+  // que quedó cacheado del uso anterior.
+  plantilla.cargar();
 }
 
 /** Dibuja la vista correspondiente a la ruta activa. */

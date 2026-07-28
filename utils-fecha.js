@@ -157,3 +157,36 @@ export function textoDiaMes(dia, mes) {
 export function mesActual() {
   return MESES[hoyPartes().mes - 1];
 }
+
+/**
+ * Lleva cualquier fecha-hora al formato "aaaa-mm-dd HH:mm".
+ *
+ * Hace falta porque un mismo dato puede llegar de tres lados con tres caras:
+ * el texto que escribió la app, un ISO con zona UTC, o el texto largo de un
+ * objeto Date si alguien editó la celda a mano en la planilla. Sin esto, el
+ * filtro de "cargados hoy" deja de reconocer registros al recargar.
+ */
+export function normalizarFechaHora(valor) {
+  const texto = String(valor || '').trim();
+  if (!texto) return '';
+
+  // Ya viene en el formato correcto.
+  if (/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2})?$/.test(texto)) return texto;
+
+  const fecha = new Date(texto);
+  if (isNaN(fecha.getTime())) return texto;
+
+  const p = new Intl.DateTimeFormat('en-CA', {
+    timeZone: ZONA_HORARIA,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).formatToParts(fecha);
+
+  const v = tipo => p.find(x => x.type === tipo).value;
+  return `${v('year')}-${v('month')}-${v('day')} ${v('hour')}:${v('minute')}`;
+}
+
+/** Igual que la anterior, pero devuelve solo "aaaa-mm-dd". */
+export function normalizarFecha(valor) {
+  return normalizarFechaHora(valor).slice(0, 10);
+}

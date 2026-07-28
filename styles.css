@@ -63,6 +63,9 @@ body {
 }
 
 h1, h2, h3 { margin: 0; font-weight: 600; }
+
+/* El atributo hidden tiene que ganarle a cualquier display declarado después. */
+[hidden] { display: none !important; }
 p { margin: 0; }
 button { font-family: inherit; font-size: inherit; cursor: pointer; }
 
@@ -693,3 +696,157 @@ button { font-family: inherit; font-size: inherit; cursor: pointer; }
   .tabla { font-size: 12px; }
   .tabla td, .tabla th { padding: var(--e2); }
 }
+
+/* ==========================================================================
+   CUMPLEAÑOS Y AJUSTES
+   Agregado en la Etapa 5.
+   ========================================================================== */
+
+/* ── Filtros ────────────────────────────────────────────────────────────── */
+.filtros {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin-bottom: var(--e4);
+}
+
+.filtro {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border: 1px solid var(--borde-fuerte);
+  background: var(--blanco);
+  color: var(--texto-suave);
+  transition: all var(--transicion);
+}
+
+.filtro:hover { border-color: var(--negro); color: var(--texto); }
+
+.filtro--activo {
+  background: var(--negro);
+  border-color: var(--negro);
+  color: var(--blanco);
+}
+
+.filtros__nota {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--alerta);
+}
+
+/* ── Tabla de cumpleaños ────────────────────────────────────────────────── */
+.tabla--cumples td { padding-top: var(--e3); padding-bottom: var(--e3); }
+
+.tabla__centro { text-align: center; }
+.tabla__acciones { width: 1%; white-space: nowrap; }
+
+.dia {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.etiqueta-hoy {
+  display: inline-block;
+  margin-left: var(--e2);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  background: var(--negro);
+  color: var(--blanco);
+  padding: 2px 6px;
+  vertical-align: middle;
+}
+
+.edad { color: var(--texto-tenue); font-size: 11px; }
+
+/* Estados de fila */
+.tabla--cumples tr[data-estado="atrasado"]   { background: var(--alerta-fondo); }
+.tabla--cumples tr[data-estado="contactado"] { opacity: 0.5; }
+.tabla--cumples tr[data-estado="contactado"]:hover { opacity: 1; }
+.tabla--cumples tr.fila--hoy td { border-bottom-color: var(--negro); }
+
+.chip[data-estado-cumple="pendiente"]  { color: var(--texto); border-color: var(--negro); }
+.chip[data-estado-cumple="atrasado"]   { color: var(--alerta); border-color: #F5DDB0; background: var(--blanco); }
+.chip[data-estado-cumple="contactado"] { color: var(--ok); border-color: #C6EFD5; background: var(--ok-fondo); }
+
+.boton--wpp { border-color: var(--ok); color: var(--ok); }
+.boton--wpp:hover { background: var(--ok); border-color: var(--ok); color: var(--blanco); }
+
+.check-contacto {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--negro);
+  cursor: pointer;
+}
+
+/* ── Ajustes ────────────────────────────────────────────────────────────── */
+.ayuda-bloque {
+  font-size: 13px;
+  color: var(--texto-suave);
+  margin-bottom: var(--e4);
+  max-width: 70ch;
+}
+
+.ayuda-bloque code {
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  padding: 1px 5px;
+  font-size: 12px;
+}
+
+.entrada--texto {
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 110px;
+}
+
+.previa {
+  margin-top: var(--e4);
+  padding: var(--e4);
+  background: var(--fondo);
+  border-left: 3px solid var(--negro);
+}
+
+.previa__titulo {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--texto-tenue);
+  margin-bottom: var(--e2);
+}
+
+.previa__texto { font-size: 14px; line-height: 1.6; }
+
+.acciones {
+  display: flex;
+  gap: var(--e3);
+  margin-top: var(--e5);
+  flex-wrap: wrap;
+}
+
+.terminales { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--e2); max-width: 640px; }
+
+.opcion-terminal--activa {
+  background: var(--negro);
+  color: var(--blanco);
+  border-color: var(--negro);
+}
+
+.opcion-terminal--activa .opcion-terminal__nota { color: rgba(255, 255, 255, 0.6); }
+
+@media (max-width: 700px) {
+  .terminales { grid-template-columns: 1fr; }
+  .filtros { flex-wrap: wrap; }
+  .filtros__nota { margin-left: 0; width: 100%; }
+}
+
+/* El campo de nombre unificado ocupa más lugar que los otros. */
+.campo--nombre { grid-column: span 4; }

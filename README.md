@@ -40,7 +40,8 @@ cumpleaños por WhatsApp.
 | `view-base.js` | Base de datos |
 | `view-dashboard.js` | Dashboard |
 | `view-logs.js` | Registro de errores |
-| `view-ajustes.js` | Plantilla de WhatsApp |
+| `view-ajustes.js` | Plantilla de WhatsApp y terminal |
+| `plantilla.js` | Mensaje de cumpleaños (hoja Config) |
 
 ## Etapas
 
@@ -48,6 +49,6 @@ cumpleaños por WhatsApp.
 - [x] 2 · Shell, navegación y conexión
 - [x] 3 · Núcleo: cache local, cola de sincronización y logs
 - [x] 4 · Carga de clientes
-- [ ] 5 · Cumpleaños del mes + WhatsApp
+- [x] 5 · Cumpleaños del mes + WhatsApp
 - [ ] 6 · Base de datos
 - [ ] 7 · Dashboard y registro
