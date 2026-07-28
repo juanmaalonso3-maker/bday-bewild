@@ -1,18 +1,289 @@
 /**
  * BE WILD · Vista "Carga de clientes"
  * ----------------------------------------------------------------------------
- * PENDIENTE — se completa en la Etapa 4.
+ * El formulario nunca espera al servidor: al guardar, el cliente aparece en la
+ * tabla de abajo y el foco vuelve al primer campo. La sincronización se muestra
+ * como un estado en la fila, no como una demora.
  */
+
+import * as store from './store.js';
+import { avisar } from './ui-avisos.js';
+import { normalizar, mostrar } from './utils-telefono.js';
+import { deInputADdMmAaaa, parseFechaNac, MESES, dos, hoyPartes } from './utils-fecha.js';
+
+let desuscribir = null;
 
 export default {
   titulo: 'Carga de clientes',
 
-  /** @param {HTMLElement} contenedor */
   render(contenedor) {
-    contenedor.innerHTML = `
-      <div class="vacio">
-        <div class="vacio__titulo">Carga de clientes</div>
-        <p class="vacio__texto">Acá va el formulario de alta y la tabla de clientes cargados hoy.</p>
-      </div>`;
+    contenedor.innerHTML = plantilla();
+    conectarFormulario();
+    desuscribir = store.suscribir(pintarTabla);
+  },
+
+  destruir() {
+    if (desuscribir) desuscribir();
+    desuscribir = null;
   }
 };
+
+/* ── Estructura ─────────────────────────────────────────────────────────── */
+
+function plantilla() {
+  const opcionesDia = Array.from({ length: 31 }, (_, i) =>
+    `<option value="${i + 1}">${i + 1}</option>`).join('');
+  const opcionesMes = MESES.map((m, i) =>
+    `<option value="${i + 1}">${m}</option>`).join('');
+
+  return `
+  <div class="carga">
+
+    <section class="tarjeta">
+      <h2 class="seccion-titulo">Nuevo cliente</h2>
+
+      <div class="formulario" id="form-cliente">
+        <div class="campo campo--nombre">
+          <label for="f-nombre">Nombre</label>
+          <input id="f-nombre" type="text" autocomplete="off" spellcheck="false" maxlength="40">
+        </div>
+
+        <div class="campo campo--apellido">
+          <label for="f-apellido">Apellido</label>
+          <input id="f-apellido" type="text" autocomplete="off" spellcheck="false" maxlength="40">
+        </div>
+
+        <div class="campo campo--fecha">
+          <label for="f-fecha">Fecha de nacimiento</label>
+          <input id="f-fecha" type="date" max="${hoyPartes().anio}-12-31">
+          <div class="sin-anio" id="sin-anio-campos" hidden>
+            <select id="f-dia" aria-label="Día">${opcionesDia}</select>
+            <select id="f-mes" aria-label="Mes">${opcionesMes}</select>
+          </div>
+          <label class="check-chico">
+            <input type="checkbox" id="f-sin-anio">
+            <span>No sé el año</span>
+          </label>
+        </div>
+
+        <div class="campo campo--celular">
+          <label for="f-celular">Celular</label>
+          <input id="f-celular" type="tel" inputmode="numeric" autocomplete="off" placeholder="11 5555-1234">
+          <p class="campo__ayuda" id="ayuda-celular"></p>
+        </div>
+
+        <div class="campo campo--notas">
+          <label for="f-notas">Notas <span class="opcional">(opcional)</span></label>
+          <input id="f-notas" type="text" autocomplete="off" maxlength="120">
+        </div>
+
+        <div class="campo campo--accion">
+          <button class="boton boton--principal" id="btn-guardar" type="button">Guardar cliente</button>
+        </div>
+      </div>
+
+      <div class="alerta-duplicado" id="alerta-duplicado" hidden></div>
+      <p class="pista">Enter pasa al campo siguiente. En el último, guarda.</p>
+    </section>
+
+    <section class="tarjeta">
+      <h2 class="seccion-titulo">
+        Cargados hoy
+        <span class="seccion-titulo__cuenta" id="cuenta-hoy"></span>
+      </h2>
+      <div id="tabla-hoy"></div>
+    </section>
+
+  </div>`;
+}
+
+/* ── Formulario ─────────────────────────────────────────────────────────── */
+
+const $ = id => document.getElementById(id);
+
+function conectarFormulario() {
+  const campos = ['f-nombre', 'f-apellido', 'f-fecha', 'f-celular', 'f-notas'];
+
+  // Enter encadena los campos; en el último, guarda.
+  campos.forEach((id, i) => {
+    $(id).addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      if (i === campos.length - 1) guardar();
+      else $(campos[i + 1]).focus();
+    });
+  });
+
+  $('f-sin-anio').addEventListener('change', e => {
+    const sinAnio = e.target.checked;
+    $('f-fecha').hidden = sinAnio;
+    $('sin-anio-campos').hidden = !sinAnio;
+    (sinAnio ? $('f-dia') : $('f-fecha')).focus();
+  });
+
+  $('f-celular').addEventListener('blur', revisarCelular);
+  $('f-celular').addEventListener('input', () => {
+    $('ayuda-celular').textContent = '';
+    $('alerta-duplicado').hidden = true;
+  });
+
+  $('btn-guardar').addEventListener('click', guardar);
+  $('f-nombre').focus();
+}
+
+/** Avisa si el número no se entiende o si ya existe en la base. */
+function revisarCelular() {
+  const valor = $('f-celular').value.trim();
+  const ayuda = $('ayuda-celular');
+  const alerta = $('alerta-duplicado');
+
+  ayuda.textContent = '';
+  ayuda.className = 'campo__ayuda';
+  alerta.hidden = true;
+  if (!valor) return;
+
+  const tel = normalizar(valor);
+
+  if (!tel.valido) {
+    ayuda.textContent = tel.motivo + '. Se va a guardar igual, marcado para revisar.';
+    ayuda.className = 'campo__ayuda campo__ayuda--alerta';
+    return;
+  }
+
+  ayuda.textContent = mostrar(tel.canonico) + (tel.asumido ? ' · se asumió el código 11' : '');
+
+  const existente = store.buscarPorCelular(tel.canonico);
+  if (existente) {
+    alerta.hidden = false;
+    alerta.innerHTML = `
+      <strong>Este número ya está en la base.</strong>
+      ${escapar(existente.nombreCompleto)} — cargado el ${escapar(existente.fechaAlta || 's/d')}.
+      Podés guardarlo igual si es otra persona.`;
+  }
+}
+
+/** Toma los datos del formulario. */
+function leerFormulario() {
+  const sinAnio = $('f-sin-anio').checked;
+
+  let fechaNacimiento = '';
+  if (sinAnio) {
+    fechaNacimiento = `${dos(Number($('f-dia').value))}/${dos(Number($('f-mes').value))}`;
+  } else if ($('f-fecha').value) {
+    fechaNacimiento = deInputADdMmAaaa($('f-fecha').value);
+  }
+
+  return {
+    nombre: $('f-nombre').value.trim(),
+    apellido: $('f-apellido').value.trim(),
+    fechaNacimiento,
+    celular: $('f-celular').value.trim(),
+    notas: $('f-notas').value.trim()
+  };
+}
+
+async function guardar() {
+  const datos = leerFormulario();
+
+  if (!datos.nombre) return frenar('f-nombre', 'Falta el nombre');
+  if (!datos.fechaNacimiento) return frenar('f-fecha', 'Falta la fecha de nacimiento');
+  if (!parseFechaNac(datos.fechaNacimiento).valida) return frenar('f-fecha', 'La fecha no es válida');
+  if (!datos.celular) return frenar('f-celular', 'Falta el celular');
+
+  const boton = $('btn-guardar');
+  boton.disabled = true;
+
+  try {
+    const cliente = await store.agregar(datos);
+    limpiarFormulario();
+    avisar(`${cliente.nombreCompleto} guardado`, 'ok');
+  } catch (err) {
+    avisar('No se pudo guardar: ' + err.message, 'error', 6000);
+  } finally {
+    boton.disabled = false;
+  }
+}
+
+function frenar(idCampo, mensaje) {
+  avisar(mensaje, 'alerta');
+  $(idCampo).focus();
+}
+
+function limpiarFormulario() {
+  ['f-nombre', 'f-apellido', 'f-fecha', 'f-celular', 'f-notas'].forEach(id => { $(id).value = ''; });
+  $('f-sin-anio').checked = false;
+  $('f-fecha').hidden = false;
+  $('sin-anio-campos').hidden = true;
+  $('ayuda-celular').textContent = '';
+  $('alerta-duplicado').hidden = true;
+  $('f-nombre').focus();
+}
+
+/* ── Tabla del día ──────────────────────────────────────────────────────── */
+
+const ETIQUETAS_SYNC = {
+  pendiente:     'Pendiente',
+  sincronizando: 'Enviando',
+  sincronizado:  'Guardado',
+  error:         'Error'
+};
+
+function pintarTabla() {
+  const contenedor = $('tabla-hoy');
+  if (!contenedor) return;
+
+  const lista = store.altasDeHoy();
+  $('cuenta-hoy').textContent = lista.length
+    ? `${lista.length} ${lista.length === 1 ? 'cliente' : 'clientes'}`
+    : '';
+
+  if (!lista.length) {
+    contenedor.innerHTML = `
+      <div class="vacio vacio--chico">
+        <p class="vacio__texto">Todavía no cargaste ningún cliente hoy.</p>
+      </div>`;
+    return;
+  }
+
+  contenedor.innerHTML = `
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Hora</th>
+          <th>Nombre</th>
+          <th>Nacimiento</th>
+          <th>Celular</th>
+          <th>Notas</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${lista.map(fila).join('')}
+      </tbody>
+    </table>`;
+}
+
+function fila(c) {
+  const hora = String(c.fechaAlta || '').slice(11, 16);
+  const tel = normalizar(c.celular);
+  const celular = tel.valido
+    ? escapar(mostrar(tel.canonico))
+    : `<span class="revisar" title="Número a revisar">${escapar(c.celular)}</span>`;
+
+  return `
+    <tr>
+      <td class="tabla__tenue">${hora}</td>
+      <td><strong>${escapar(c.nombreCompleto)}</strong></td>
+      <td>${escapar(c.fechaNacimiento || '—')}</td>
+      <td>${celular}</td>
+      <td class="tabla__tenue">${escapar(c.notas || '')}</td>
+      <td><span class="chip" data-estado="${c.estadoSync}">${ETIQUETAS_SYNC[c.estadoSync] || c.estadoSync}</span></td>
+    </tr>`;
+}
+
+/** Evita que un nombre con < o & rompa la tabla. */
+function escapar(texto) {
+  return String(texto ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[ch]);
+}

@@ -25,6 +25,12 @@ cumpleaños por WhatsApp.
 | `config.js` | URL del backend, terminales, tiempos. **Es el único que se toca para configurar.** |
 | `api.js` | Única capa que habla con Apps Script |
 | `router.js` | Navegación por hash |
+| `db.js` | Base local (IndexedDB): clientes, cola, logs |
+| `sync.js` | Motor de sincronización con reintentos |
+| `store.js` | Estado central. Las vistas solo hablan con este archivo. |
+| `logger.js` | Registro de eventos local y remoto |
+| `utils-fecha.js` | Fechas, próximo cumpleaños, zona horaria |
+| `utils-telefono.js` | Normalización de celulares y links de WhatsApp |
 | `app.js` | Arranque y orquestación |
 | `ui-shell.js` | Menú lateral, título, indicador de conexión |
 | `ui-terminal.js` | Identidad de la terminal (provisorio hasta el login) |
@@ -40,8 +46,8 @@ cumpleaños por WhatsApp.
 
 - [x] 1 · Backend (Code.gs)
 - [x] 2 · Shell, navegación y conexión
-- [ ] 3 · Núcleo: cache local, cola de sincronización y logs
-- [ ] 4 · Carga de clientes
+- [x] 3 · Núcleo: cache local, cola de sincronización y logs
+- [x] 4 · Carga de clientes
 - [ ] 5 · Cumpleaños del mes + WhatsApp
 - [ ] 6 · Base de datos
 - [ ] 7 · Dashboard y registro

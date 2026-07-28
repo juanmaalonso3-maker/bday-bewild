@@ -483,3 +483,213 @@ button { font-family: inherit; font-size: inherit; cursor: pointer; }
   .topbar { padding: 0 var(--e4); height: auto; flex-wrap: wrap; gap: var(--e3); padding-top: var(--e3); padding-bottom: var(--e3); }
   .contenido { padding: var(--e4); }
 }
+
+/* ==========================================================================
+   FORMULARIOS, TABLAS Y CONTROLES
+   Agregado en la Etapa 4.
+   ========================================================================== */
+
+/* ── Disposición de la vista de carga ───────────────────────────────────── */
+.carga {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+}
+
+/* ── Formulario ─────────────────────────────────────────────────────────── */
+.formulario {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--e4);
+  align-items: start;
+}
+
+.campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+.campo--nombre   { grid-column: span 3; }
+.campo--apellido { grid-column: span 3; }
+.campo--fecha    { grid-column: span 2; }
+.campo--celular  { grid-column: span 2; }
+.campo--notas    { grid-column: span 2; }
+.campo--accion   { grid-column: span 12; }
+
+.campo label {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  font-weight: 600;
+}
+
+.opcional {
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 400;
+  color: var(--texto-tenue);
+}
+
+.campo input[type="text"],
+.campo input[type="tel"],
+.campo input[type="date"],
+.campo select,
+.entrada {
+  font-family: var(--texto-familia);
+  font-size: 14px;
+  padding: 9px 10px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio);
+  background: var(--blanco);
+  color: var(--texto);
+  width: 100%;
+  transition: border-color var(--transicion);
+}
+
+.campo input:focus,
+.campo select:focus,
+.entrada:focus {
+  outline: none;
+  border-color: var(--negro);
+  box-shadow: inset 0 -2px 0 var(--negro);
+}
+
+.campo input[hidden] { display: none; }
+
+.sin-anio { display: grid; grid-template-columns: 1fr 1.4fr; gap: 6px; }
+
+.check-chico {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--texto-suave);
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.check-chico input { width: 13px; height: 13px; accent-color: var(--negro); }
+
+.campo__ayuda {
+  font-size: 11px;
+  color: var(--texto-suave);
+  min-height: 14px;
+}
+
+.campo__ayuda--alerta { color: var(--alerta); }
+
+.pista {
+  margin-top: var(--e3);
+  font-size: 11px;
+  color: var(--texto-tenue);
+}
+
+/* ── Botones ────────────────────────────────────────────────────────────── */
+.boton {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 11px 26px;
+  border: 1px solid var(--negro);
+  background: var(--blanco);
+  color: var(--negro);
+  border-radius: var(--radio);
+  transition: background var(--transicion), color var(--transicion), opacity var(--transicion);
+}
+
+.boton:hover { background: var(--negro); color: var(--blanco); }
+
+.boton--principal { background: var(--negro); color: var(--blanco); }
+.boton--principal:hover { background: var(--negro-suave); }
+
+.boton:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.boton--chico { font-size: 13px; padding: 6px 14px; letter-spacing: 0.08em; }
+
+/* ── Aviso de duplicado ─────────────────────────────────────────────────── */
+.alerta-duplicado {
+  margin-top: var(--e4);
+  padding: var(--e3) var(--e4);
+  background: var(--alerta-fondo);
+  border-left: 3px solid var(--alerta);
+  font-size: 13px;
+  color: #8A5200;
+}
+
+.alerta-duplicado[hidden] { display: none; }
+
+/* ── Tablas ─────────────────────────────────────────────────────────────── */
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tabla th {
+  text-align: left;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  font-weight: 600;
+  padding: 0 var(--e3) var(--e2);
+  border-bottom: 1px solid var(--negro);
+  white-space: nowrap;
+}
+
+.tabla td {
+  padding: var(--e3);
+  border-bottom: 1px solid var(--borde);
+  vertical-align: middle;
+}
+
+.tabla tbody tr:hover { background: var(--fondo); }
+
+.tabla__tenue { color: var(--texto-suave); }
+
+.tabla__numero { font-variant-numeric: tabular-nums; }
+
+.revisar {
+  color: var(--alerta);
+  border-bottom: 1px dotted var(--alerta);
+  cursor: help;
+}
+
+/* ── Chips de estado ────────────────────────────────────────────────────── */
+.chip {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border: 1px solid var(--borde-fuerte);
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+
+.chip[data-estado="sincronizado"]  { color: var(--ok);     border-color: #C6EFD5; background: var(--ok-fondo); }
+.chip[data-estado="pendiente"]     { color: var(--texto-suave); border-color: var(--borde-fuerte); }
+.chip[data-estado="sincronizando"] { color: var(--texto);  border-color: var(--negro); }
+.chip[data-estado="error"]         { color: var(--error);  border-color: #F5C2C2; background: var(--error-fondo); }
+
+/* ── Vacío chico, dentro de una tarjeta ─────────────────────────────────── */
+.vacio--chico {
+  padding: var(--e5) var(--e4);
+  border-style: dashed;
+}
+
+/* ── Responsive del formulario ──────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .campo--nombre, .campo--apellido { grid-column: span 6; }
+  .campo--fecha, .campo--celular, .campo--notas { grid-column: span 4; }
+}
+
+@media (max-width: 700px) {
+  .formulario { grid-template-columns: 1fr; }
+  .campo { grid-column: span 1 !important; }
+  .tabla { font-size: 12px; }
+  .tabla td, .tabla th { padding: var(--e2); }
+}

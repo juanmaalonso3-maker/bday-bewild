@@ -62,16 +62,38 @@ export function badge(ruta, valor) {
  * @param {'conectando'|'ok'|'offline'|'error'} estado
  * @param {string} [texto]
  */
+let _estado = 'conectando';
+let _pendientes = 0;
+
 export function estadoConexion(estado, texto) {
+  _estado = estado;
+  pintarEstado(texto);
+}
+
+/** Cantidad de operaciones esperando ser enviadas. */
+export function pendientesSync(n) {
+  _pendientes = n || 0;
+  pintarEstado();
+}
+
+function pintarEstado(textoForzado) {
   const el = document.getElementById('estado-conexion');
+  if (!el) return;
+
   const etiquetas = {
     conectando: 'Conectando…',
     ok:         'Conectado',
     offline:    'Sin conexión',
     error:      'Error de conexión'
   };
-  el.dataset.estado = estado;
-  el.querySelector('.estado__texto').textContent = texto || etiquetas[estado];
+
+  const base = textoForzado || etiquetas[_estado];
+  const sufijo = _pendientes
+    ? ` · ${_pendientes} ${_pendientes === 1 ? 'pendiente' : 'pendientes'}`
+    : '';
+
+  el.dataset.estado = _estado;
+  el.querySelector('.estado__texto').textContent = base + sufijo;
 }
 
 /** Fecha de hoy en el encabezado, escrita en criollo. */
