@@ -10,6 +10,7 @@
  */
 
 import * as store from './store.js';
+import * as auth from './auth.js';
 import { avisar } from './ui-avisos.js';
 import { mostrar, normalizar } from './utils-telefono.js';
 import { aCSV, descargar, nombreConFecha } from './utils-csv.js';
@@ -50,7 +51,7 @@ function estructura() {
     <div class="barra-herramientas">
       <input id="buscador" class="entrada entrada--busqueda" type="search"
              placeholder="Buscar por nombre, celular o nota…" autocomplete="off">
-      <button class="boton boton--chico" id="btn-exportar" type="button">Exportar CSV</button>
+      <button class="boton boton--chico" id="btn-exportar" type="button" hidden>Exportar CSV</button>
     </div>
 
     <div class="tabla-scroll" id="tabla-base"></div>
@@ -76,6 +77,10 @@ function estructura() {
           <input id="e-celular" type="tel" inputmode="numeric">
         </div>
         <div class="campo">
+          <label for="e-email">Email</label>
+          <input id="e-email" type="email" maxlength="80">
+        </div>
+        <div class="campo">
           <label for="e-notas">Notas</label>
           <input id="e-notas" type="text" maxlength="120">
         </div>
@@ -97,7 +102,9 @@ function conectar() {
     pintar();
   });
 
-  $('btn-exportar').addEventListener('click', exportar);
+  const botonExportar = $('btn-exportar');
+  botonExportar.hidden = !auth.puede('exportar');
+  botonExportar.addEventListener('click', exportar);
   $('btn-cancelar-edicion').addEventListener('click', cerrarEdicion);
   $('btn-guardar-edicion').addEventListener('click', guardarEdicion);
 
@@ -115,9 +122,11 @@ const COLUMNAS = [
   { clave: 'fechaNacimiento', titulo: 'Nacimiento',  ordenable: true },
   { clave: 'proximo',         titulo: 'Próximo',     ordenable: true },
   { clave: 'celular',         titulo: 'Celular',     ordenable: true },
+  { clave: 'email',           titulo: 'Email',       ordenable: true },
   { clave: 'notas',           titulo: 'Notas',       ordenable: false },
   { clave: 'fechaAlta',       titulo: 'Alta',        ordenable: true },
-  { clave: 'usuario',         titulo: 'Terminal',    ordenable: true }
+  { clave: 'sucursal',        titulo: 'Local',       ordenable: true },
+  { clave: 'usuario',         titulo: 'Cargado por', ordenable: true }
 ];
 
 function filtrados() {
@@ -127,6 +136,7 @@ function filtrados() {
     lista = lista.filter(c =>
       c.nombreCompleto.toLowerCase().includes(busqueda) ||
       String(c.celular).includes(busqueda.replace(/\D/g, '')) ||
+      String(c.email || '').toLowerCase().includes(busqueda) ||
       String(c.notas || '').toLowerCase().includes(busqueda)
     );
   }
@@ -210,14 +220,27 @@ function fila(c) {
       <td>${escapar(c.fechaNacimiento || '—')}</td>
       <td class="tabla__tenue">${proximo}</td>
       <td>${celular}</td>
+      <td class="tabla__tenue">${escapar(c.email || '')}</td>
       <td class="tabla__tenue">${escapar(c.notas || '')}</td>
       <td class="tabla__tenue">${escapar(String(c.fechaAlta || '').slice(0, 10))}</td>
+      <td>${etiquetaLocal(c.sucursal)}</td>
       <td class="tabla__tenue">${escapar(c.usuario || '')}</td>
-      <td class="tabla__acciones">
-        <button class="boton-icono" data-editar="${c.id}" type="button" title="Editar">Editar</button>
-        <button class="boton-icono boton-icono--peligro" data-baja="${c.id}" type="button" title="Dar de baja">Baja</button>
-      </td>
+      <td class="tabla__acciones">${acciones(c)}</td>
     </tr>`;
+}
+
+/** El local que dio de alta al cliente, como etiqueta. */
+function etiquetaLocal(sucursal) {
+  if (!sucursal) return '<span class="tabla__tenue">—</span>';
+  return `<span class="chip" data-local="${escapar(sucursal)}">${escapar(sucursal)}</span>`;
+}
+
+/** Editar y dar de baja son solo para administradores. */
+function acciones(c) {
+  if (!auth.puede('editar')) return '<span class="tabla__tenue">—</span>';
+  return `
+    <button class="boton-icono" data-editar="${c.id}" type="button" title="Editar">Editar</button>
+    <button class="boton-icono boton-icono--peligro" data-baja="${c.id}" type="button" title="Dar de baja">Baja</button>`;
 }
 
 function conectarTabla() {
@@ -250,6 +273,7 @@ function abrirEdicion(id) {
   $('edicion-titulo').textContent = c.nombreCompleto;
   $('e-nombre').value = `${c.nombre || ''} ${c.apellido || ''}`.trim();
   $('e-celular').value = mostrar(c.celular) || c.celular || '';
+  $('e-email').value = c.email || '';
   $('e-notas').value = c.notas || '';
 
   const enInput = aInputDate(c.fechaNacimiento);
@@ -289,6 +313,7 @@ async function guardarEdicion() {
       apellido: '',
       fechaNacimiento,
       celular: $('e-celular').value.trim(),
+      email: $('e-email').value.trim().toLowerCase(),
       notas: $('e-notas').value.trim()
     });
     cerrarEdicion();
@@ -329,9 +354,11 @@ function exportar() {
     fechaNacimiento: c.fechaNacimiento,
     proximoCumple: c.cumple ? c.cumple.iso : '',
     celular: c.celular,
+    email: c.email || '',
     notas: c.notas || '',
     ultimoContacto: c.ultimoContacto || '',
     fechaAlta: c.fechaAlta || '',
+    sucursal: c.sucursal || '',
     usuario: c.usuario || ''
   }));
 
@@ -340,10 +367,12 @@ function exportar() {
     { clave: 'fechaNacimiento', titulo: 'Fecha de nacimiento' },
     { clave: 'proximoCumple',   titulo: 'Próximo cumpleaños' },
     { clave: 'celular',         titulo: 'Celular' },
+    { clave: 'email',           titulo: 'Email' },
     { clave: 'notas',           titulo: 'Notas' },
     { clave: 'ultimoContacto',  titulo: 'Último contacto' },
     { clave: 'fechaAlta',       titulo: 'Fecha de alta' },
-    { clave: 'usuario',         titulo: 'Terminal' }
+    { clave: 'sucursal',        titulo: 'Local' },
+    { clave: 'usuario',         titulo: 'Cargado por' }
   ];
 
   descargar(nombreConFecha('bewild-clientes'), aCSV(filas, columnas));

@@ -12,7 +12,7 @@
 import { logs as almacenLogs } from './db.js';
 import { api } from './api.js';
 import { ahoraISO } from './utils-fecha.js';
-import * as terminal from './ui-terminal.js';
+import * as auth from './auth.js';
 
 const MAXIMO_LOCAL = 1000;
 const TAMANO_TANDA = 10;
@@ -33,7 +33,7 @@ export async function registrar(nivel, evento, detalle = '', clienteId = '') {
     nivel,
     evento,
     detalle: typeof detalle === 'object' ? recortar(detalle) : String(detalle || ''),
-    usuario: terminal.nombre(),
+    usuario: auth.nombre(),
     clienteId
   };
 

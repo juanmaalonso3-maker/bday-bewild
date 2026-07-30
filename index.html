@@ -30,21 +30,30 @@
 </head>
 <body>
 
-  <!-- ══ Selector de terminal (primer arranque) ══════════════════════════ -->
-  <div id="modal-terminal" class="modal" hidden>
-    <div class="modal__caja">
-      <p class="modal__eyebrow">Primer ingreso en esta computadora</p>
-      <h2 class="modal__titulo">¿Desde dónde vas a cargar?</h2>
-      <p class="modal__texto">
-        Queda guardado en esta computadora y se registra en cada cliente que cargues.
-        Lo podés cambiar después desde el encabezado.
+  <!-- ══ Pantalla de ingreso ═════════════════════════════════════════════ -->
+  <div id="pantalla-login" class="login" hidden>
+    <div class="login__caja">
+      <div class="login__marca">
+        <span class="login__wordmark">BE WILD</span>
+        <span class="login__sub">Gestión de clientes</span>
+      </div>
+
+      <p class="login__texto">
+        Ingresá con la cuenta de Google del local.
       </p>
-      <div id="terminal-opciones" class="modal__opciones"></div>
+
+      <div id="boton-google" class="login__boton"></div>
+
+      <p class="login__error" id="login-error" hidden></p>
+
+      <p class="login__pie">
+        Solo las cuentas autorizadas de BE WILD tienen acceso.
+      </p>
     </div>
   </div>
 
   <!-- ══ Layout principal ════════════════════════════════════════════════ -->
-  <div class="layout">
+  <div class="layout" id="app" hidden>
 
     <!-- Barra lateral -->
     <aside class="sidebar">
@@ -78,10 +87,14 @@
             <span class="estado__texto">Conectando…</span>
           </div>
 
-          <button class="terminal" id="btn-terminal" type="button" title="Cambiar terminal">
-            <span class="terminal__etiqueta">Terminal</span>
-            <span class="terminal__valor" id="terminal-actual">—</span>
-          </button>
+          <div class="sesion" id="sesion" hidden>
+            <span class="sesion__avatar" aria-hidden="true"></span>
+            <span class="sesion__datos">
+              <span class="sesion__local"></span>
+              <span class="sesion__mail"></span>
+            </span>
+            <button class="sesion__salir" id="btn-salir" type="button" title="Cerrar sesión">Salir</button>
+          </div>
         </div>
       </header>
 

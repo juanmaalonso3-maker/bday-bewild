@@ -47,6 +47,8 @@ function resolver() {
   const ruta = rutaActual();
   const vista = rutas.get(ruta);
 
+  // Una ruta desconocida —o no permitida para el rol— cae a la primera
+  // sección disponible en vez de dejar la pantalla vacía.
   if (!vista) {
     location.hash = '#/' + rutaPorDefecto;
     return;

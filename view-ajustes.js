@@ -7,8 +7,7 @@
 
 import * as plantilla from './plantilla.js';
 import { avisar } from './ui-avisos.js';
-import { TERMINALES } from './config.js';
-import * as terminal from './ui-terminal.js';
+import * as auth from './auth.js';
 
 export default {
   titulo: 'Ajustes',
@@ -39,12 +38,12 @@ export default {
     </section>
 
     <section class="tarjeta">
-      <h2 class="seccion-titulo">Terminal de esta computadora</h2>
+      <h2 class="seccion-titulo">Sesión</h2>
       <p class="ayuda-bloque">
-        Queda registrada en cada cliente que se carga desde acá.
-        Cuando activemos el ingreso con Google, se reemplaza por el usuario real.
+        Estos datos quedan registrados en cada cliente que cargues, para saber
+        desde qué local se dio de alta.
       </p>
-      <div class="terminales" id="lista-terminales"></div>
+      <dl class="datos-sesion" id="datos-sesion"></dl>
     </section>`;
 
     conectar();
@@ -53,6 +52,14 @@ export default {
 
 function conectar() {
   const campo = document.getElementById('txt-plantilla');
+
+  // Los operadores ven el mensaje pero no lo cambian: la promo la define
+  // administración y tiene que ser la misma en las dos sucursales.
+  if (!auth.puede('configurar')) {
+    campo.readOnly = true;
+    campo.classList.add('entrada--solo-lectura');
+    document.querySelector('.acciones').hidden = true;
+  }
 
   const refrescarPrevia = () => {
     document.getElementById('previa-texto').textContent = plantilla.vistaPrevia(campo.value);
@@ -80,27 +87,24 @@ function conectar() {
     avisar('Texto original cargado. Acordate de guardarlo.', 'alerta');
   });
 
-  pintarTerminales();
+  pintarSesion();
 }
 
-function pintarTerminales() {
-  const cont = document.getElementById('lista-terminales');
-  const activa = terminal.obtener();
+function pintarSesion() {
+  const u = auth.usuario();
+  if (!u) return;
 
-  cont.innerHTML = TERMINALES.map(t => `
-    <button class="opcion-terminal ${t.id === activa ? 'opcion-terminal--activa' : ''}"
-            data-terminal="${t.id}" type="button">
-      <span>${t.nombre}</span>
-      <span class="opcion-terminal__nota">${t.nota}</span>
-    </button>`).join('');
+  const filas = [
+    ['Cuenta', u.email],
+    ['Local', u.etiqueta],
+    ['Rol', u.rol === 'ADMIN' ? 'Administrador (acceso completo)' : 'Operador (carga y cumpleaños)']
+  ];
 
-  cont.querySelectorAll('[data-terminal]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      terminal.definir(btn.dataset.terminal);
-      pintarTerminales();
-      avisar('Terminal actualizada', 'ok');
-    });
-  });
+  document.getElementById('datos-sesion').innerHTML = filas.map(([clave, valor]) => `
+    <div class="datos-sesion__fila">
+      <dt>${escapar(clave)}</dt>
+      <dd>${escapar(valor)}</dd>
+    </div>`).join('');
 }
 
 function escapar(texto) {

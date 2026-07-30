@@ -10,6 +10,7 @@
  */
 
 import { API_URL, TIEMPOS } from './config.js';
+import * as auth from './auth.js';
 
 /** Error de red o de aplicación, con la acción que lo originó. */
 export class ErrorApi extends Error {
@@ -18,6 +19,14 @@ export class ErrorApi extends Error {
     this.name = 'ErrorApi';
     this.accion = accion;
     this.causa = causa;
+  }
+}
+
+/** El backend rechazó la sesión: hay que volver a entrar. */
+export class ErrorSesion extends ErrorApi {
+  constructor(mensaje, accion) {
+    super(mensaje, accion);
+    this.name = 'ErrorSesion';
   }
 }
 
@@ -36,7 +45,9 @@ export async function llamar(accion, payload = {}) {
     const respuesta = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: accion, payload }),
+      // El token viaja en el cuerpo, no en un encabezado: agregar encabezados
+      // propios dispararía el preflight OPTIONS que Apps Script no responde.
+      body: JSON.stringify({ action: accion, payload, token: auth.token() }),
       redirect: 'follow',
       signal: controlador.signal
     });
@@ -47,6 +58,9 @@ export async function llamar(accion, payload = {}) {
 
     const cuerpo = await respuesta.json();
     if (!cuerpo.ok) {
+      if (cuerpo.codigo === 'SESION' || cuerpo.codigo === 'PERMISO') {
+        throw new ErrorSesion(cuerpo.error || 'Sesión no válida', accion);
+      }
       throw new ErrorApi(cuerpo.error || 'Error desconocido del servidor', accion);
     }
 

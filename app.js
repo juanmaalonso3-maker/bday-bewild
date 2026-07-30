@@ -1,17 +1,23 @@
 /**
  * BE WILD · Punto de entrada
  * ----------------------------------------------------------------------------
- * Orquesta el arranque: shell, router, estado, sincronización y verificación
- * del backend. Todo lo que pueda fallar acá falla hacia la interfaz con un
- * mensaje, nunca con una pantalla en blanco.
+ * El arranque tiene dos caminos:
+ *
+ *   sin sesión → pantalla de ingreso con el botón de Google
+ *   con sesión → se monta la aplicación completa
+ *
+ * La aplicación se monta una sola vez por sesión. Si el usuario sale y vuelve a
+ * entrar con otra cuenta, se recarga la página: es más simple y más seguro que
+ * intentar desarmar el estado a mano, y evita que queden datos de la sesión
+ * anterior dando vueltas en memoria.
  */
 
 import { TIEMPOS } from './config.js';
 import * as router from './router.js';
 import * as shell from './ui-shell.js';
-import * as terminal from './ui-terminal.js';
+import * as auth from './auth.js';
 import { avisar } from './ui-avisos.js';
-import { api, ErrorApi } from './api.js';
+import { api, ErrorApi, ErrorSesion } from './api.js';
 import * as store from './store.js';
 import * as sync from './sync.js';
 import { log } from './logger.js';
@@ -27,24 +33,60 @@ import ajustes    from './view-ajustes.js';
 
 const VISTAS = { carga, cumpleanos, base, dashboard, logs, ajustes };
 
+let montada = false;
+
 /* ── Arranque ───────────────────────────────────────────────────────────── */
 
 async function iniciar() {
-  shell.construirNav();
-  shell.montarEncabezado();
-
-  // Si config.TERMINAL_POR_DEFECTO tiene valor, se entra directo con esa
-  // terminal. Si vale null, se exige elegir una antes de operar.
-  if (!terminal.obtener()) {
-    await terminal.pedirTerminal({ obligatorio: true });
-    shell.montarEncabezado();
+  if (auth.recuperarSesion()) {
+    return montarApp();
   }
+  mostrarLogin();
+}
 
-  shell.SECCIONES.forEach(sec => router.registrar(sec.ruta, VISTAS[sec.ruta]));
+/* ── Ingreso ────────────────────────────────────────────────────────────── */
+
+async function mostrarLogin() {
+  const pantalla = document.getElementById('pantalla-login');
+  const error = document.getElementById('login-error');
+
+  document.getElementById('app').hidden = true;
+  pantalla.hidden = false;
+
+  auth.alCambiar(sesion => { if (sesion) montarApp(); });
+
+  try {
+    await auth.montarBoton(document.getElementById('boton-google'), mensaje => {
+      error.textContent = mensaje;
+      error.hidden = false;
+    });
+  } catch (err) {
+    error.textContent =
+      'No se pudo cargar el ingreso de Google. Revisá la conexión y recargá la página.';
+    error.hidden = false;
+    console.error('[auth]', err);
+  }
+}
+
+/* ── Aplicación ─────────────────────────────────────────────────────────── */
+
+async function montarApp() {
+  if (montada) return;
+  montada = true;
+
+  document.getElementById('pantalla-login').hidden = true;
+  document.getElementById('app').hidden = false;
+
+  shell.construirNav();
+  shell.montarEncabezado(salir);
+
+  // Solo se registran las vistas que el rol tiene permitidas: si alguien
+  // escribe #/base a mano sin ser admin, el router lo manda a la primera
+  // sección disponible en vez de abrirla.
+  shell.seccionesVisibles().forEach(sec => router.registrar(sec.ruta, VISTAS[sec.ruta]));
   router.alNavegar(montarVista);
   router.iniciar();
 
-  // La cache local levanta primero: la app es usable antes de tocar la red.
   try {
     await store.iniciar();
   } catch (err) {
@@ -59,10 +101,11 @@ async function iniciar() {
   verificarBackend();
   vigilarConexion();
   refrescoPeriodico();
+  auth.vigilarVencimiento(sesionVencida);
 
-  // El mensaje de WhatsApp se precarga en segundo plano: si falla, se usa el
-  // que quedó cacheado del uso anterior.
   plantilla.cargar();
+
+  log.info('app:ingreso', { usuario: auth.nombre(), rol: auth.rol() });
 }
 
 /** Dibuja la vista correspondiente a la ruta activa. */
@@ -92,6 +135,28 @@ function actualizarContadores() {
   shell.badge('cumpleanos', pendientes);
 }
 
+/* ── Sesión ─────────────────────────────────────────────────────────────── */
+
+async function salir() {
+  const pendientes = await sync.pendientes();
+  if (pendientes) {
+    const seguir = confirm(
+      `Quedan ${pendientes} ${pendientes === 1 ? 'operación' : 'operaciones'} sin sincronizar.\n\n` +
+      'Si salís ahora, se van a enviar la próxima vez que alguien entre desde esta computadora. ¿Salir igual?'
+    );
+    if (!seguir) return;
+  }
+
+  log.info('app:salida', { usuario: auth.nombre() });
+  auth.salir();
+  location.reload();
+}
+
+function sesionVencida() {
+  avisar('La sesión venció. Volvé a entrar para seguir.', 'alerta', 8000);
+  setTimeout(() => location.reload(), 2000);
+}
+
 /* ── Backend ────────────────────────────────────────────────────────────── */
 
 async function verificarBackend() {
@@ -105,6 +170,12 @@ async function verificarBackend() {
     await api.ping();
     shell.estadoConexion('ok');
   } catch (err) {
+    if (err instanceof ErrorSesion) {
+      shell.estadoConexion('error', 'Sesión rechazada');
+      avisar('El servidor no reconoció la sesión. Volvé a entrar.', 'error', 8000);
+      log.error('backend:sesion', err.message);
+      return;
+    }
     shell.estadoConexion('error');
     const detalle = err instanceof ErrorApi ? err.message : 'Error inesperado';
     avisar('Sin conexión con el servidor. Se sigue guardando local. ' + detalle, 'alerta', 6000);

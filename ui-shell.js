@@ -2,31 +2,45 @@
  * BE WILD · Estructura de la interfaz
  * ----------------------------------------------------------------------------
  * Arma la navegación, mantiene el título de la vista, el indicador de conexión
- * y el selector de terminal. No sabe nada de datos.
+ * y los datos de la sesión. No sabe nada de datos de clientes.
  */
 
 import { VERSION, ZONA_HORARIA } from './config.js';
-import * as terminal from './ui-terminal.js';
+import * as auth from './auth.js';
 import * as router from './router.js';
 
-/** Secciones del menú. `grupo` define en qué bloque del sidebar aparece. */
+/**
+ * Secciones del menú.
+ *   grupo   → bloque del sidebar donde aparece
+ *   permiso → qué hace falta para verla (ver = todos, editar = solo admin)
+ */
 export const SECCIONES = [
-  { ruta: 'carga',       etiqueta: 'Carga de clientes',  grupo: 'principal' },
-  { ruta: 'cumpleanos',  etiqueta: 'Cumpleaños del mes', grupo: 'principal' },
-  { ruta: 'base',        etiqueta: 'Base de datos',      grupo: 'principal' },
-  { ruta: 'dashboard',   etiqueta: 'Dashboard',          grupo: 'principal' },
-  { ruta: 'logs',        etiqueta: 'Registro',           grupo: 'sistema' },
-  { ruta: 'ajustes',     etiqueta: 'Ajustes',            grupo: 'sistema' }
+  { ruta: 'carga',       etiqueta: 'Carga de clientes',  grupo: 'principal', permiso: 'cargar' },
+  { ruta: 'cumpleanos',  etiqueta: 'Cumpleaños del mes', grupo: 'principal', permiso: 'contactar' },
+  { ruta: 'base',        etiqueta: 'Base de datos',      grupo: 'principal', permiso: 'editar' },
+  { ruta: 'dashboard',   etiqueta: 'Dashboard',          grupo: 'principal', permiso: 'editar' },
+  { ruta: 'logs',        etiqueta: 'Registro',           grupo: 'sistema',   permiso: 'editar' },
+  { ruta: 'ajustes',     etiqueta: 'Ajustes',            grupo: 'sistema',   permiso: 'cargar' }
 ];
 
-/** Dibuja el menú lateral. */
+/** Secciones que el usuario de esta sesión tiene permitidas. */
+export function seccionesVisibles() {
+  return SECCIONES.filter(sec => auth.puede(sec.permiso));
+}
+
+/** Dibuja el menú lateral con lo que corresponda al rol. */
 export function construirNav() {
   const contenedores = {
     principal: document.getElementById('nav-principal'),
     sistema:   document.getElementById('nav-sistema')
   };
 
-  SECCIONES.forEach(sec => {
+  contenedores.principal.innerHTML = '';
+  contenedores.sistema.innerHTML = '';
+
+  const visibles = seccionesVisibles();
+
+  visibles.forEach(sec => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'nav__item';
@@ -35,6 +49,10 @@ export function construirNav() {
     btn.addEventListener('click', () => router.ir(sec.ruta));
     contenedores[sec.grupo].appendChild(btn);
   });
+
+  // Si el rol no llega a ninguna sección del bloque, se oculta el rótulo.
+  const titulo = document.querySelector('.nav__grupo-titulo');
+  if (titulo) titulo.hidden = !visibles.some(s => s.grupo === 'sistema');
 }
 
 /** Marca el ítem activo y actualiza el título. */
@@ -48,7 +66,7 @@ export function marcarActiva(ruta, titulo) {
 }
 
 /**
- * Escribe un número al lado de una sección del menú (ej. cumpleaños pendientes).
+ * Escribe un número al lado de una sección del menú.
  * @param {string} ruta
  * @param {number|null} valor  null o 0 lo oculta.
  */
@@ -57,14 +75,15 @@ export function badge(ruta, valor) {
   if (el) el.textContent = valor ? String(valor) : '';
 }
 
-/**
- * Indicador de conexión de la barra superior.
- * @param {'conectando'|'ok'|'offline'|'error'} estado
- * @param {string} [texto]
- */
+/* ── Indicador de conexión ──────────────────────────────────────────────── */
+
 let _estado = 'conectando';
 let _pendientes = 0;
 
+/**
+ * @param {'conectando'|'ok'|'offline'|'error'} estado
+ * @param {string} [texto]
+ */
 export function estadoConexion(estado, texto) {
   _estado = estado;
   pintarEstado(texto);
@@ -96,6 +115,8 @@ function pintarEstado(textoForzado) {
   el.querySelector('.estado__texto').textContent = base + sufijo;
 }
 
+/* ── Encabezado ─────────────────────────────────────────────────────────── */
+
 /** Fecha de hoy en el encabezado, escrita en criollo. */
 export function pintarFecha() {
   const hoy = new Date().toLocaleDateString('es-AR', {
@@ -104,11 +125,37 @@ export function pintarFecha() {
   document.getElementById('fecha-hoy').textContent = hoy;
 }
 
-/** Conecta el botón de terminal y muestra la versión. */
-export function montarEncabezado() {
-  document.getElementById('terminal-actual').textContent = terminal.nombre();
-  document.getElementById('btn-terminal')
-    .addEventListener('click', () => terminal.pedirTerminal());
+/** Muestra quién está usando la app y desde qué local. */
+export function pintarSesion() {
+  const u = auth.usuario();
+  const caja = document.getElementById('sesion');
+  if (!caja) return;
+
+  if (!u) {
+    caja.hidden = true;
+    return;
+  }
+
+  caja.hidden = false;
+  caja.querySelector('.sesion__local').textContent = u.etiqueta;
+  caja.querySelector('.sesion__mail').textContent = u.email;
+
+  const avatar = caja.querySelector('.sesion__avatar');
+  if (u.foto) {
+    avatar.style.backgroundImage = `url(${u.foto})`;
+    avatar.textContent = '';
+  } else {
+    avatar.style.backgroundImage = '';
+    avatar.textContent = (u.nombre || u.email).charAt(0).toUpperCase();
+  }
+
+  caja.dataset.rol = u.rol;
+}
+
+/** Conecta el botón de salir y muestra la versión. */
+export function montarEncabezado(alSalir) {
   document.getElementById('version-app').textContent = 'v' + VERSION;
+  document.getElementById('btn-salir').addEventListener('click', alSalir);
   pintarFecha();
+  pintarSesion();
 }

@@ -16,7 +16,7 @@ import { log } from './logger.js';
 import { ahoraISO, hoyISO, parseFechaNac, proximoCumple, contactadoEsteAnio,
          normalizarFechaHora, normalizarFecha } from './utils-fecha.js';
 import { normalizar } from './utils-telefono.js';
-import * as terminal from './ui-terminal.js';
+import * as auth from './auth.js';
 
 /** @type {Map<string, Object>} */
 const memoria = new Map();
@@ -121,6 +121,13 @@ export function buscarPorCelular(canonico) {
   return listar().find(c => c.celular === canonico) || null;
 }
 
+/** Busca por mail. Segunda vía para detectar un cliente repetido. */
+export function buscarPorEmail(email) {
+  const buscado = String(email || '').trim().toLowerCase();
+  if (!buscado) return null;
+  return listar().find(c => String(c.email || '').toLowerCase() === buscado) || null;
+}
+
 /**
  * Agrega los campos calculados que necesitan las vistas.
  * No se guardan: se derivan en cada lectura para que nunca queden viejos.
@@ -163,10 +170,14 @@ export async function agregar(datos) {
     apellido: (datos.apellido || '').trim(),
     fechaNacimiento: (datos.fechaNacimiento || '').trim(),
     celular: tel.valido ? tel.canonico : String(datos.celular || '').replace(/\D/g, ''),
+    email: (datos.email || '').trim().toLowerCase(),
     notas: (datos.notas || '').trim(),
     ultimoContacto: '',
     fechaAlta: ahoraISO(),
-    usuario: terminal.nombre(),
+    // Quién y desde dónde. El servidor los reescribe con los datos del token,
+    // así que no se puede falsear editando el JavaScript.
+    usuario: auth.nombre(),
+    sucursal: auth.sucursal(),
     activo: true,
     _sync: sync.ESTADOS.PENDIENTE
   };

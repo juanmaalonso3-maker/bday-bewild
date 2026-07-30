@@ -1041,3 +1041,176 @@ button { font-family: inherit; font-size: inherit; cursor: pointer; }
   .indicador__valor { font-size: 36px; }
   .barras-mes { height: 150px; }
 }
+
+/* ==========================================================================
+   INGRESO Y SESIÓN
+   Agregado en la Etapa 8.
+   ========================================================================== */
+
+/* ── Pantalla de ingreso ────────────────────────────────────────────────── */
+.login {
+  position: fixed;
+  inset: 0;
+  background: var(--negro);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--e4);
+  z-index: 300;
+}
+
+.login[hidden] { display: none; }
+
+.login__caja {
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--e5);
+}
+
+.login__marca { display: flex; flex-direction: column; gap: 4px; }
+
+.login__wordmark {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 46px;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--blanco);
+}
+
+.login__sub {
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.login__texto {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.login__boton { min-height: 44px; display: flex; justify-content: center; }
+
+.login__error {
+  font-size: 13px;
+  color: #FF8A8A;
+  background: rgba(220, 38, 38, 0.12);
+  border-left: 3px solid var(--error);
+  padding: var(--e3) var(--e4);
+  text-align: left;
+  width: 100%;
+}
+
+.login__error[hidden] { display: none; }
+
+.login__pie {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: var(--e4);
+  width: 100%;
+}
+
+/* ── Sesión en la barra superior ────────────────────────────────────────── */
+.sesion {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  border: 1px solid var(--borde);
+  padding: 5px 6px 5px var(--e2);
+}
+
+.sesion[hidden] { display: none; }
+
+.sesion__avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--negro);
+  background-size: cover;
+  background-position: center;
+  color: var(--blanco);
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sesion__datos { display: flex; flex-direction: column; line-height: 1.25; }
+
+.sesion__local {
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sesion__mail { font-size: 10px; color: var(--texto-tenue); }
+
+.sesion[data-rol="ADMIN"] .sesion__avatar { background: var(--negro); }
+.sesion[data-rol="OPERADOR"] .sesion__avatar { background: var(--texto-suave); }
+
+.sesion__salir {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid var(--borde);
+  color: var(--texto-suave);
+  padding: 5px 9px;
+  transition: all var(--transicion);
+}
+
+.sesion__salir:hover { border-color: var(--negro); color: var(--texto); }
+
+/* ── Datos de sesión en Ajustes ─────────────────────────────────────────── */
+.datos-sesion { margin: 0; display: flex; flex-direction: column; gap: 0; max-width: 520px; }
+
+.datos-sesion__fila {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: var(--e4);
+  padding: var(--e3) 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.datos-sesion dt {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  font-weight: 600;
+  padding-top: 2px;
+}
+
+.datos-sesion dd { margin: 0; font-size: 14px; }
+
+.entrada--solo-lectura { background: var(--fondo); color: var(--texto-suave); cursor: default; }
+
+/* ── Chip del local en la base ──────────────────────────────────────────── */
+.chip[data-local="ESTE"]  { color: var(--texto); border-color: var(--negro); }
+.chip[data-local="OESTE"] { color: var(--texto); border-color: var(--negro); }
+.chip[data-local="ADMIN"] { color: var(--texto-suave); }
+
+/* ── Campos nuevos del formulario ───────────────────────────────────────── */
+.campo--email { grid-column: span 2; }
+
+@media (max-width: 1200px) {
+  .campo--email { grid-column: span 4; }
+}
+
+@media (max-width: 900px) {
+  .sesion__datos { display: none; }
+  .login__wordmark { font-size: 36px; }
+}

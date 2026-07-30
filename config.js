@@ -1,29 +1,47 @@
 /**
  * BE WILD · Configuración global
  * ----------------------------------------------------------------------------
- * Único archivo que hay que tocar si cambia el backend o se agrega una terminal.
+ * Único archivo que hay que tocar para cambiar el backend, dar de alta un
+ * usuario o ajustar los tiempos.
  */
 
 /** URL del Web App de Apps Script (termina en /exec). */
 export const API_URL =
   'https://script.google.com/macros/s/AKfycbyl_vTVc7UpkRYWr5fi3KUV4VuPIZ0ne-X9NBceadU0snmjManufwlv5epp1eE_wJEV/exec';
 
-export const VERSION = '1.0.0';
-
-/** Terminales disponibles. El valor se guarda en cada cliente cargado. */
-export const TERMINALES = [
-  { id: 'ESTE',  nombre: 'Este',  nota: 'Local Lanús Este' },
-  { id: 'OESTE', nombre: 'Oeste', nota: 'Local Lanús Oeste' },
-  { id: 'ADMIN', nombre: 'Admin', nota: 'Administración' }
-];
+export const VERSION = '2.0.0';
 
 /**
- * Terminal que se asume si nadie eligió una.
- * Con un valor acá, la app entra directo y no muestra el selector de arranque.
- * Se puede seguir cambiando a mano desde el botón del encabezado.
- * Para volver a pedirlo obligatoriamente al abrir, poner null.
+ * ID de cliente OAuth de Google.
+ *
+ * IMPORTANTE: en la consola de Google Cloud, este ID tiene que tener declarado
+ * el origen de GitHub Pages en "Orígenes autorizados de JavaScript":
+ *
+ *     https://juanmaalonso3-maker.github.io
+ *
+ * Sin eso, el botón de Google no aparece y la consola tira un error de origen.
+ * El mismo ID va copiado en el Code.gs, porque el backend verifica que el token
+ * haya sido emitido para esta aplicación y no para otra.
  */
-export const TERMINAL_POR_DEFECTO = 'ESTE';
+export const CLIENT_ID =
+  '849214701404-ff11l3oo5k9hecabvf99cnbbgjlegeam.apps.googleusercontent.com';
+
+/**
+ * Usuarios habilitados y qué puede hacer cada uno.
+ *
+ *   ADMIN    → acceso completo: editar, dar de baja, exportar, configurar
+ *   OPERADOR → solo carga de clientes y cumpleaños del mes
+ *
+ * `sucursal` es lo que queda registrado en cada cliente cargado.
+ * Esta lista también está en el Code.gs: el navegador la usa para armar el
+ * menú, el servidor para decidir de verdad.
+ */
+export const USUARIOS = [
+  { email: 'bewild.ventas@gmail.com', rol: 'ADMIN',    sucursal: 'ADMIN', etiqueta: 'Administración' },
+  { email: 'info@bewild.com.ar',      rol: 'ADMIN',    sucursal: 'ADMIN', etiqueta: 'Administración' },
+  { email: 'bw.este@bewild.com.ar',   rol: 'OPERADOR', sucursal: 'ESTE',  etiqueta: 'Lanús Este' },
+  { email: 'bw.oeste@bewild.com.ar',  rol: 'OPERADOR', sucursal: 'OESTE', etiqueta: 'Lanús Oeste' }
+];
 
 /** Tiempos, en milisegundos. */
 export const TIEMPOS = {
@@ -35,7 +53,7 @@ export const TIEMPOS = {
 
 /** Claves de almacenamiento local. */
 export const CLAVES = {
-  terminal: 'bw_terminal'
+  sesion: 'bw_sesion'
 };
 
 export const ZONA_HORARIA = 'America/Argentina/Buenos_Aires';

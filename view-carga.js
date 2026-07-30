@@ -68,6 +68,13 @@ function plantilla() {
           <p class="campo__ayuda" id="ayuda-celular"></p>
         </div>
 
+        <div class="campo campo--email">
+          <label for="f-email">Email <span class="opcional">(opcional)</span></label>
+          <input id="f-email" type="email" autocomplete="off" spellcheck="false"
+                 maxlength="80" placeholder="nombre@mail.com">
+          <p class="campo__ayuda" id="ayuda-email"></p>
+        </div>
+
         <div class="campo campo--notas">
           <label for="f-notas">Notas <span class="opcional">(opcional)</span></label>
           <input id="f-notas" type="text" autocomplete="off" maxlength="120">
@@ -98,7 +105,7 @@ function plantilla() {
 const $ = id => document.getElementById(id);
 
 function conectarFormulario() {
-  const campos = ['f-nombre', 'f-fecha', 'f-celular', 'f-notas'];
+  const campos = ['f-nombre', 'f-fecha', 'f-celular', 'f-email', 'f-notas'];
 
   // Enter encadena los campos; en el último, guarda.
   campos.forEach((id, i) => {
@@ -122,6 +129,9 @@ function conectarFormulario() {
     $('ayuda-celular').textContent = '';
     $('alerta-duplicado').hidden = true;
   });
+
+  $('f-email').addEventListener('blur', revisarEmail);
+  $('f-email').addEventListener('input', () => { $('ayuda-email').textContent = ''; });
 
   $('btn-guardar').addEventListener('click', guardar);
   $('f-nombre').focus();
@@ -158,6 +168,30 @@ function revisarCelular() {
   }
 }
 
+/**
+ * El mail es opcional, así que un formato raro avisa pero no frena la carga:
+ * en el mostrador es preferible un dato imperfecto a perder el cliente.
+ */
+function revisarEmail() {
+  const valor = $('f-email').value.trim();
+  const ayuda = $('ayuda-email');
+  ayuda.textContent = '';
+  ayuda.className = 'campo__ayuda';
+  if (!valor) return;
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(valor)) {
+    ayuda.textContent = 'Revisá el formato del mail.';
+    ayuda.className = 'campo__ayuda campo__ayuda--alerta';
+    return;
+  }
+
+  const existente = store.buscarPorEmail(valor);
+  if (existente) {
+    ayuda.textContent = `Ya lo tiene ${existente.nombreCompleto}.`;
+    ayuda.className = 'campo__ayuda campo__ayuda--alerta';
+  }
+}
+
 /** Toma los datos del formulario. */
 function leerFormulario() {
   const sinAnio = $('f-sin-anio').checked;
@@ -177,6 +211,7 @@ function leerFormulario() {
     apellido: '',
     fechaNacimiento,
     celular: $('f-celular').value.trim(),
+    email: $('f-email').value.trim().toLowerCase(),
     notas: $('f-notas').value.trim()
   };
 }
@@ -209,11 +244,12 @@ function frenar(idCampo, mensaje) {
 }
 
 function limpiarFormulario() {
-  ['f-nombre', 'f-fecha', 'f-celular', 'f-notas'].forEach(id => { $(id).value = ''; });
+  ['f-nombre', 'f-fecha', 'f-celular', 'f-email', 'f-notas'].forEach(id => { $(id).value = ''; });
   $('f-sin-anio').checked = false;
   $('f-fecha').hidden = false;
   $('sin-anio-campos').hidden = true;
   $('ayuda-celular').textContent = '';
+  $('ayuda-email').textContent = '';
   $('alerta-duplicado').hidden = true;
   $('f-nombre').focus();
 }
@@ -252,6 +288,7 @@ function pintarTabla() {
           <th>Nombre</th>
           <th>Nacimiento</th>
           <th>Celular</th>
+          <th>Email</th>
           <th>Notas</th>
           <th>Estado</th>
         </tr>
@@ -275,6 +312,7 @@ function fila(c) {
       <td><strong>${escapar(c.nombreCompleto)}</strong></td>
       <td>${escapar(c.fechaNacimiento || '—')}</td>
       <td>${celular}</td>
+      <td class="tabla__tenue">${escapar(c.email || '')}</td>
       <td class="tabla__tenue">${escapar(c.notas || '')}</td>
       <td><span class="chip" data-estado="${c.estadoSync}">${ETIQUETAS_SYNC[c.estadoSync] || c.estadoSync}</span></td>
     </tr>`;
