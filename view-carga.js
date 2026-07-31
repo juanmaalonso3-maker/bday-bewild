@@ -6,10 +6,10 @@
  * como un estado en la fila, no como una demora.
  */
 
-import * as store from './store.js';
-import { avisar } from './ui-avisos.js';
-import { normalizar, mostrar } from './utils-telefono.js';
-import { deInputADdMmAaaa, parseFechaNac, MESES, dos, hoyPartes } from './utils-fecha.js';
+import * as store from './store.js?v=2.1.0';
+import { avisar } from './ui-avisos.js?v=2.1.0';
+import { normalizar, mostrar } from './utils-telefono.js?v=2.1.0';
+import { deInputADdMmAaaa, parseFechaNac, MESES, dos, hoyPartes } from './utils-fecha.js?v=2.1.0';
 
 let desuscribir = null;
 
@@ -77,7 +77,8 @@ function plantilla() {
 
         <div class="campo campo--notas">
           <label for="f-notas">Notas <span class="opcional">(opcional)</span></label>
-          <input id="f-notas" type="text" autocomplete="off" maxlength="120">
+          <input id="f-notas" type="text" autocomplete="off" maxlength="200"
+                 placeholder="Talle, preferencias, qué se llevó…">
         </div>
 
         <div class="campo campo--accion">
@@ -94,6 +95,15 @@ function plantilla() {
         Cargados hoy
         <span class="seccion-titulo__cuenta" id="cuenta-hoy"></span>
       </h2>
+
+      <div class="aviso-error" id="aviso-error" hidden>
+        <div class="aviso-error__texto">
+          <strong id="aviso-error__titulo"></strong>
+          <span id="aviso-error__detalle"></span>
+        </div>
+        <button class="boton boton--chico" id="btn-reintentar-todo" type="button">Reintentar todo</button>
+      </div>
+
       <div id="tabla-hoy"></div>
     </section>
 
@@ -134,6 +144,22 @@ function conectarFormulario() {
   $('f-email').addEventListener('input', () => { $('ayuda-email').textContent = ''; });
 
   $('btn-guardar').addEventListener('click', guardar);
+
+  $('btn-reintentar-todo').addEventListener('click', async e => {
+    const boton = e.currentTarget;
+    boton.disabled = true;
+    boton.textContent = 'Enviando…';
+    try {
+      await store.reintentarTodo();
+      avisar('Reintento enviado', 'ok');
+    } catch (err) {
+      avisar('No se pudo reintentar: ' + err.message, 'error');
+    } finally {
+      boton.disabled = false;
+      boton.textContent = 'Reintentar todo';
+    }
+  });
+
   $('f-nombre').focus();
 }
 
@@ -297,6 +323,41 @@ function pintarTabla() {
         ${lista.map(fila).join('')}
       </tbody>
     </table>`;
+
+  conectarReintentos(lista);
+}
+
+/** Botones de reintento, por fila y general. */
+function conectarReintentos(lista) {
+  document.querySelectorAll('[data-reintentar]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = 'Enviando…';
+      try {
+        await store.reintentar(btn.dataset.reintentar);
+      } catch (err) {
+        avisar('No se pudo reintentar: ' + err.message, 'error');
+      }
+    });
+  });
+
+  const conError = lista.filter(c => c.estadoSync === 'error');
+  const aviso = $('aviso-error');
+  if (!aviso) return;
+
+  aviso.hidden = !conError.length;
+  if (!conError.length) return;
+
+  $('aviso-error__titulo').textContent =
+    conError.length === 1
+      ? 'Un cliente no se pudo guardar en la planilla.'
+      : `${conError.length} clientes no se pudieron guardar en la planilla.`;
+
+  // El motivo del primer error alcanza: cuando fallan varios, casi siempre es
+  // por la misma causa.
+  $('aviso-error__detalle').textContent = conError[0].errorSync
+    ? ' ' + conError[0].errorSync
+    : ' Están guardados en esta computadora y se reenvían al reintentar.';
 }
 
 function fila(c) {
@@ -314,8 +375,25 @@ function fila(c) {
       <td>${celular}</td>
       <td class="tabla__tenue">${escapar(c.email || '')}</td>
       <td class="tabla__tenue">${escapar(c.notas || '')}</td>
-      <td><span class="chip" data-estado="${c.estadoSync}">${ETIQUETAS_SYNC[c.estadoSync] || c.estadoSync}</span></td>
+      <td class="celda-estado">${estadoConBoton(c)}</td>
     </tr>`;
+}
+
+/**
+ * Estado de la fila. Cuando algo falló se agrega el botón de reintentar:
+ * la mayoría de los errores son pasajeros (se cayó internet, el servidor tardó)
+ * y se resuelven con un clic, sin tener que volver a cargar al cliente.
+ */
+function estadoConBoton(c) {
+  const chip = `<span class="chip" data-estado="${c.estadoSync}" title="${escapar(c.errorSync || '')}">${
+    ETIQUETAS_SYNC[c.estadoSync] || c.estadoSync
+  }</span>`;
+
+  if (c.estadoSync !== 'error') return chip;
+
+  return `${chip}
+    <button class="boton-icono boton-icono--reintentar" data-reintentar="${c.id}"
+            type="button" title="Volver a enviar">Reintentar</button>`;
 }
 
 /** Evita que un nombre con < o & rompa la tabla. */

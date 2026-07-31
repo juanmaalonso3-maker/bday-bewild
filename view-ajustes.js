@@ -5,9 +5,9 @@
  * el cambio lo ven las dos sucursales sin tocar el código.
  */
 
-import * as plantilla from './plantilla.js';
-import { avisar } from './ui-avisos.js';
-import * as auth from './auth.js';
+import * as plantilla from './plantilla.js?v=2.1.0';
+import { avisar } from './ui-avisos.js?v=2.1.0';
+import * as auth from './auth.js?v=2.1.0';
 
 export default {
   titulo: 'Ajustes',

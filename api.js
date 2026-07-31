@@ -9,8 +9,8 @@
  * El body sigue siendo JSON, solo cambia el encabezado declarado.
  */
 
-import { API_URL, TIEMPOS } from './config.js';
-import * as auth from './auth.js';
+import { API_URL, TIEMPOS } from './config.js?v=2.1.0';
+import * as auth from './auth.js?v=2.1.0';
 
 /** Error de red o de aplicación, con la acción que lo originó. */
 export class ErrorApi extends Error {

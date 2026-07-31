@@ -12,24 +12,24 @@
  * anterior dando vueltas en memoria.
  */
 
-import { TIEMPOS } from './config.js';
-import * as router from './router.js';
-import * as shell from './ui-shell.js';
-import * as auth from './auth.js';
-import { avisar } from './ui-avisos.js';
-import { api, ErrorApi, ErrorSesion } from './api.js';
-import * as store from './store.js';
-import * as sync from './sync.js';
-import { log } from './logger.js';
-import { contactadoEsteAnio } from './utils-fecha.js';
-import * as plantilla from './plantilla.js';
+import { TIEMPOS } from './config.js?v=2.1.0';
+import * as router from './router.js?v=2.1.0';
+import * as shell from './ui-shell.js?v=2.1.0';
+import * as auth from './auth.js?v=2.1.0';
+import { avisar } from './ui-avisos.js?v=2.1.0';
+import { api, ErrorApi, ErrorSesion } from './api.js?v=2.1.0';
+import * as store from './store.js?v=2.1.0';
+import * as sync from './sync.js?v=2.1.0';
+import { log } from './logger.js?v=2.1.0';
+import { contactadoEsteAnio } from './utils-fecha.js?v=2.1.0';
+import * as plantilla from './plantilla.js?v=2.1.0';
 
-import carga      from './view-carga.js';
-import cumpleanos from './view-cumpleanos.js';
-import base       from './view-base.js';
-import dashboard  from './view-dashboard.js';
-import logs       from './view-logs.js';
-import ajustes    from './view-ajustes.js';
+import carga      from './view-carga.js?v=2.1.0';
+import cumpleanos from './view-cumpleanos.js?v=2.1.0';
+import base       from './view-base.js?v=2.1.0';
+import dashboard  from './view-dashboard.js?v=2.1.0';
+import logs       from './view-logs.js?v=2.1.0';
+import ajustes    from './view-ajustes.js?v=2.1.0';
 
 const VISTAS = { carga, cumpleanos, base, dashboard, logs, ajustes };
 

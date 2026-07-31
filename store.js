@@ -10,13 +10,13 @@
  *   3. Se encola para el servidor  → viaja cuando se pueda
  */
 
-import { clientes as almacen, nuevoId } from './db.js';
-import * as sync from './sync.js';
-import { log } from './logger.js';
+import { clientes as almacen, nuevoId } from './db.js?v=2.1.0';
+import * as sync from './sync.js?v=2.1.0';
+import { log } from './logger.js?v=2.1.0';
 import { ahoraISO, hoyISO, parseFechaNac, proximoCumple, contactadoEsteAnio,
-         normalizarFechaHora, normalizarFecha } from './utils-fecha.js';
-import { normalizar } from './utils-telefono.js';
-import * as auth from './auth.js';
+         normalizarFechaHora, normalizarFecha } from './utils-fecha.js?v=2.1.0';
+import { normalizar } from './utils-telefono.js?v=2.1.0';
+import * as auth from './auth.js?v=2.1.0';
 
 /** @type {Map<string, Object>} */
 const memoria = new Map();
@@ -56,7 +56,13 @@ export async function iniciar() {
   // El estado de sincronización de cada cliente cambia por su cuenta.
   sync.alCambiar(async evento => {
     if (evento.clienteId && memoria.has(evento.clienteId)) {
-      memoria.get(evento.clienteId)._sync = evento.estado;
+      const cliente = memoria.get(evento.clienteId);
+      cliente._sync = evento.estado;
+
+      // Se conserva el motivo para poder mostrarlo en la fila. Al sincronizar
+      // bien, se limpia: si no, quedaría un error viejo confundiendo.
+      if (evento.error) cliente._error = evento.error;
+      else if (evento.estado === sync.ESTADOS.SINCRONIZADO) delete cliente._error;
     }
     if (evento.tipo === 'descarga') await recargarDesdeCache();
     notificar();
@@ -149,7 +155,8 @@ function decorar(c) {
     nacimiento,
     cumple,
     contactado: contactadoEsteAnio(ultimoContacto),
-    estadoSync: c._sync || sync.ESTADOS.SINCRONIZADO
+    estadoSync: c._sync || sync.ESTADOS.SINCRONIZADO,
+    errorSync: c._error || ''
   };
 }
 
@@ -246,8 +253,35 @@ export async function marcarContacto(id, contactado) {
   log.info('cliente:contacto', { contactado }, id);
 }
 
+/**
+ * Vuelve a intentar el envío de un cliente que quedó con error.
+ * @returns {Promise<number>} operaciones reencoladas
+ */
+export async function reintentar(id) {
+  const cliente = memoria.get(id);
+  if (cliente) {
+    cliente._sync = sync.ESTADOS.SINCRONIZANDO;
+    delete cliente._error;
+    notificar();
+  }
+  return sync.reintentarCliente(id);
+}
+
+/** Reintenta todo lo que haya quedado pendiente. */
+export async function reintentarTodo() {
+  return sync.reintentarAhora();
+}
+
+/** Clientes que no se pudieron enviar. */
+export function conError() {
+  return listar().filter(c => c.estadoSync === sync.ESTADOS.ERROR);
+}
+
 /** Quita los campos internos antes de mandar al servidor. */
 function paraServidor(c) {
-  const { _sync, nombreCompleto, nacimiento, cumple, contactado, estadoSync, ...limpio } = c;
+  const {
+    _sync, _error, nombreCompleto, nacimiento, cumple,
+    contactado, estadoSync, errorSync, ...limpio
+  } = c;
   return limpio;
 }

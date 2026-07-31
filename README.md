@@ -20,6 +20,21 @@ cumpleaños por WhatsApp.
 4. Pegar `Code.gs` en Apps Script, ejecutar `setupManual()` y redesplegar con
    **Nueva versión**.
 
+## Al subir una versión nueva
+
+Los navegadores guardan los `.js` en caché unos minutos. Si al actualizar queda
+una mezcla de archivos viejos y nuevos, la aplicación arranca en blanco.
+
+Para evitarlo, cada import lleva `?v=` con el número de versión: al cambiarlo,
+el navegador está obligado a bajar todo de nuevo.
+
+```bash
+python3 sellar_version.py 2.0.2
+```
+
+Eso actualiza `config.js`, todos los imports y el `index.html`. Después se suben
+**todos** los archivos, no solo los que cambiaron.
+
 ## Usuarios y permisos
 
 | Cuenta | Rol | Local | Acceso |

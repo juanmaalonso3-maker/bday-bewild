@@ -509,12 +509,15 @@ button { font-family: inherit; font-size: inherit; cursor: pointer; }
 
 .campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 
-.campo--nombre   { grid-column: span 3; }
-.campo--apellido { grid-column: span 3; }
+/* Primera fila: los datos que identifican al cliente.
+   Segunda fila: las notas, que necesitan lugar para escribir de corrido.
+   El mail lleva 3 columnas porque una dirección entera no entra en menos. */
+.campo--nombre   { grid-column: span 4; }
 .campo--fecha    { grid-column: span 2; }
-.campo--celular  { grid-column: span 2; }
-.campo--notas    { grid-column: span 2; }
-.campo--accion   { grid-column: span 12; }
+.campo--celular  { grid-column: span 3; }
+.campo--email    { grid-column: span 3; }
+.campo--notas    { grid-column: 1 / -1; }
+.campo--accion   { grid-column: 1 / -1; }
 
 .campo label {
   font-size: 10px;
@@ -686,8 +689,10 @@ button { font-family: inherit; font-size: inherit; cursor: pointer; }
 
 /* ── Responsive del formulario ──────────────────────────────────────────── */
 @media (max-width: 1200px) {
-  .campo--nombre, .campo--apellido { grid-column: span 6; }
-  .campo--fecha, .campo--celular, .campo--notas { grid-column: span 4; }
+  .campo--nombre  { grid-column: span 6; }
+  .campo--fecha   { grid-column: span 6; }
+  .campo--celular { grid-column: span 6; }
+  .campo--email   { grid-column: span 6; }
 }
 
 @media (max-width: 700px) {
@@ -848,8 +853,6 @@ button { font-family: inherit; font-size: inherit; cursor: pointer; }
   .filtros__nota { margin-left: 0; width: 100%; }
 }
 
-/* El campo de nombre unificado ocupa más lugar que los otros. */
-.campo--nombre { grid-column: span 4; }
 
 /* ==========================================================================
    BASE DE DATOS, DASHBOARD Y REGISTRO
@@ -1203,14 +1206,34 @@ button { font-family: inherit; font-size: inherit; cursor: pointer; }
 .chip[data-local="OESTE"] { color: var(--texto); border-color: var(--negro); }
 .chip[data-local="ADMIN"] { color: var(--texto-suave); }
 
-/* ── Campos nuevos del formulario ───────────────────────────────────────── */
-.campo--email { grid-column: span 2; }
-
-@media (max-width: 1200px) {
-  .campo--email { grid-column: span 4; }
-}
-
 @media (max-width: 900px) {
   .sesion__datos { display: none; }
   .login__wordmark { font-size: 36px; }
 }
+
+/* ── Reintento de sincronización ────────────────────────────────────────── */
+.aviso-error {
+  display: flex;
+  align-items: center;
+  gap: var(--e4);
+  padding: var(--e3) var(--e4);
+  margin-bottom: var(--e4);
+  background: var(--error-fondo);
+  border-left: 3px solid var(--error);
+}
+
+.aviso-error[hidden] { display: none; }
+
+.aviso-error__texto { flex: 1; font-size: 13px; color: #8A1F1F; min-width: 0; }
+.aviso-error__texto strong { display: block; margin-bottom: 2px; }
+.aviso-error__texto span { font-size: 12px; opacity: 0.85; }
+
+.aviso-error .boton { border-color: var(--error); color: var(--error); flex-shrink: 0; }
+.aviso-error .boton:hover { background: var(--error); color: var(--blanco); }
+
+.celda-estado { white-space: nowrap; }
+.celda-estado .boton-icono { margin-left: 6px; }
+
+.boton-icono--reintentar { border-color: var(--error); color: var(--error); }
+.boton-icono--reintentar:hover { background: var(--error); border-color: var(--error); color: var(--blanco); }
+.boton-icono:disabled { opacity: 0.5; cursor: wait; }

@@ -8,10 +8,10 @@
  * Los errores y advertencias además viajan a la hoja Logs de la planilla.
  */
 
-import { historial, limpiarHistorial } from './logger.js';
-import * as sync from './sync.js';
-import { avisar } from './ui-avisos.js';
-import { aCSV, descargar, nombreConFecha } from './utils-csv.js';
+import { historial, limpiarHistorial } from './logger.js?v=2.1.0';
+import * as sync from './sync.js?v=2.1.0';
+import { avisar } from './ui-avisos.js?v=2.1.0';
+import { aCSV, descargar, nombreConFecha } from './utils-csv.js?v=2.1.0';
 
 let filtroNivel = 'todos';
 let entradas = [];

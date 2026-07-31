@@ -5,9 +5,9 @@
  * y los datos de la sesión. No sabe nada de datos de clientes.
  */
 
-import { VERSION, ZONA_HORARIA } from './config.js';
-import * as auth from './auth.js';
-import * as router from './router.js';
+import { VERSION, ZONA_HORARIA } from './config.js?v=2.1.0';
+import * as auth from './auth.js?v=2.1.0';
+import * as router from './router.js?v=2.1.0';
 
 /**
  * Secciones del menú.

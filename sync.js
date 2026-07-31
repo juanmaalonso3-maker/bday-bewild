@@ -10,10 +10,10 @@
  * la base local y la API.
  */
 
-import { cola, clientes as almacenClientes, meta, nuevoId } from './db.js';
-import { api } from './api.js';
-import { TIEMPOS } from './config.js';
-import { log } from './logger.js';
+import { cola, clientes as almacenClientes, meta, nuevoId } from './db.js?v=2.1.0';
+import { api } from './api.js?v=2.1.0';
+import { TIEMPOS } from './config.js?v=2.1.0';
+import { log } from './logger.js?v=2.1.0';
 
 const TAMANO_TANDA = 25;
 const LATIDO = 3000;
@@ -213,4 +213,29 @@ export async function reintentarAhora() {
     await cola.guardar(op);
   }
   return procesar();
+}
+
+/**
+ * Reintenta solo lo que quedó pendiente de un cliente.
+ * Sirve para el botón que aparece en la fila cuando algo falló.
+ */
+export async function reintentarCliente(clienteId) {
+  const lista = await cola.todas();
+  let encontradas = 0;
+
+  for (const op of lista) {
+    if (op.clienteId !== clienteId) continue;
+    op.proximoIntento = 0;
+    op.intentos = 0;   // vuelve a arrancar con la espera más corta
+    await cola.guardar(op);
+    encontradas++;
+  }
+
+  await procesar();
+  return encontradas;
+}
+
+/** Cuántas operaciones quedaron en estado de error. */
+export async function conError() {
+  return (await cola.todas()).filter(op => op.intentos > 0).length;
 }

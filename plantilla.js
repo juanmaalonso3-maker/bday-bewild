@@ -9,9 +9,9 @@
  * Variables disponibles en el texto: {nombre}, {dia}, {mes}
  */
 
-import { api } from './api.js';
-import { log } from './logger.js';
-import { MESES } from './utils-fecha.js';
+import { api } from './api.js?v=2.1.0';
+import { log } from './logger.js?v=2.1.0';
+import { MESES } from './utils-fecha.js?v=2.1.0';
 
 const CLAVE_CACHE = 'bw_plantilla';
 

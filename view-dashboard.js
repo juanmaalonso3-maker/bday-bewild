@@ -5,9 +5,9 @@
  * partir del estado ya cargado, así que no hace ni una llamada al servidor.
  */
 
-import * as store from './store.js';
-import * as router from './router.js';
-import { hoyISO, hoyPartes, mesActual, MESES } from './utils-fecha.js';
+import * as store from './store.js?v=2.1.0';
+import * as router from './router.js?v=2.1.0';
+import { hoyISO, hoyPartes, mesActual, MESES } from './utils-fecha.js?v=2.1.0';
 
 let desuscribir = null;
 

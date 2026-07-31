@@ -10,7 +10,7 @@
  *   - Fechas de sistema:   texto ISO "aaaa-mm-dd".
  */
 
-import { ZONA_HORARIA } from './config.js';
+import { ZONA_HORARIA } from './config.js?v=2.1.0';
 
 export const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',

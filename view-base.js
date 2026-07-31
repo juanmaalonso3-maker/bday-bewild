@@ -9,12 +9,12 @@
  * desde el Sheet.
  */
 
-import * as store from './store.js';
-import * as auth from './auth.js';
-import { avisar } from './ui-avisos.js';
-import { mostrar, normalizar } from './utils-telefono.js';
-import { aCSV, descargar, nombreConFecha } from './utils-csv.js';
-import { deInputADdMmAaaa, aInputDate, parseFechaNac, textoDiaMes } from './utils-fecha.js';
+import * as store from './store.js?v=2.1.0';
+import * as auth from './auth.js?v=2.1.0';
+import { avisar } from './ui-avisos.js?v=2.1.0';
+import { mostrar, normalizar } from './utils-telefono.js?v=2.1.0';
+import { aCSV, descargar, nombreConFecha } from './utils-csv.js?v=2.1.0';
+import { deInputADdMmAaaa, aInputDate, parseFechaNac, textoDiaMes } from './utils-fecha.js?v=2.1.0';
 
 let desuscribir = null;
 let busqueda = '';

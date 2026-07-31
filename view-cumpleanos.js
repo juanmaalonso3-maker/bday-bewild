@@ -13,11 +13,11 @@
  * semana, esos clientes se perderían para siempre.
  */
 
-import * as store from './store.js';
-import * as plantilla from './plantilla.js';
-import { avisar } from './ui-avisos.js';
-import { mostrar, linkWhatsApp, normalizar } from './utils-telefono.js';
-import { mesActual, textoDiaMes, hoyPartes } from './utils-fecha.js';
+import * as store from './store.js?v=2.1.0';
+import * as plantilla from './plantilla.js?v=2.1.0';
+import { avisar } from './ui-avisos.js?v=2.1.0';
+import { mostrar, linkWhatsApp, normalizar } from './utils-telefono.js?v=2.1.0';
+import { mesActual, textoDiaMes, hoyPartes } from './utils-fecha.js?v=2.1.0';
 
 let desuscribir = null;
 let filtro = 'pendientes'; // 'pendientes' | 'todos'
