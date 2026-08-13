@@ -12,24 +12,22 @@
  * anterior dando vueltas en memoria.
  */
 
-import { TIEMPOS } from './config.js?v=2.1.0';
-import * as router from './router.js?v=2.1.0';
-import * as shell from './ui-shell.js?v=2.1.0';
-import * as auth from './auth.js?v=2.1.0';
-import { avisar } from './ui-avisos.js?v=2.1.0';
-import { api, ErrorApi, ErrorSesion } from './api.js?v=2.1.0';
-import * as store from './store.js?v=2.1.0';
-import * as sync from './sync.js?v=2.1.0';
-import { log } from './logger.js?v=2.1.0';
-import { contactadoEsteAnio } from './utils-fecha.js?v=2.1.0';
-import * as plantilla from './plantilla.js?v=2.1.0';
+import { TIEMPOS } from './config.js?v=2.2.0';
+import * as router from './router.js?v=2.2.0';
+import * as shell from './ui-shell.js?v=2.2.0';
+import * as auth from './auth.js?v=2.2.0';
+import { avisar } from './ui-avisos.js?v=2.2.0';
+import * as store from './store.js?v=2.2.0';
+import * as sync from './sync.js?v=2.2.0';
+import { log } from './logger.js?v=2.2.0';
+import { hoyPartes, mesSiguiente, marcadoParaCiclo } from './utils-fecha.js?v=2.2.0';
 
-import carga      from './view-carga.js?v=2.1.0';
-import cumpleanos from './view-cumpleanos.js?v=2.1.0';
-import base       from './view-base.js?v=2.1.0';
-import dashboard  from './view-dashboard.js?v=2.1.0';
-import logs       from './view-logs.js?v=2.1.0';
-import ajustes    from './view-ajustes.js?v=2.1.0';
+import carga      from './view-carga.js?v=2.2.0';
+import cumpleanos from './view-cumpleanos.js?v=2.2.0';
+import base       from './view-base.js?v=2.2.0';
+import dashboard  from './view-dashboard.js?v=2.2.0';
+import logs       from './view-logs.js?v=2.2.0';
+import ajustes    from './view-ajustes.js?v=2.2.0';
 
 const VISTAS = { carga, cumpleanos, base, dashboard, logs, ajustes };
 
@@ -98,12 +96,13 @@ async function montarApp() {
   sync.alCambiar(evento => shell.pendientesSync(evento.pendientes));
   sync.pendientes().then(n => shell.pendientesSync(n));
 
-  verificarBackend();
+  // Una sola llamada al servidor para arrancar. La plantilla de WhatsApp ya no
+  // se pide acá: la sección de Cumpleaños la carga cuando se abre, que es el
+  // único momento en que hace falta.
+  conectar();
   vigilarConexion();
   refrescoPeriodico();
   auth.vigilarVencimiento(sesionVencida);
-
-  plantilla.cargar();
 
   log.info('app:ingreso', { usuario: auth.nombre(), rol: auth.rol() });
 }
@@ -125,11 +124,21 @@ function montarVista(ruta, vista) {
   contenedor.focus();
 }
 
-/** Número al lado de "Cumpleaños del mes": lo que falta contactar. */
+/**
+ * Número al lado de "Cumpleaños": lo que falta contactar.
+ *
+ * Suma el mes en curso y el que viene, porque los dos son trabajo pendiente:
+ * a los de septiembre conviene empezar a escribirles en agosto.
+ */
 function actualizarContadores() {
+  const hoy = hoyPartes();
+  const proximo = mesSiguiente(hoy.mes, hoy.anio);
+
   const pendientes = store.listar().filter(c => {
-    if (!c.cumple || !c.cumple.esteMes) return false;
-    return !contactadoEsteAnio(c.ultimoContacto);
+    if (!c.cumple) return false;
+    if (c.cumple.esteMes) return !marcadoParaCiclo(c.ultimoContacto, hoy.mes, hoy.anio);
+    if (c.cumple.mesQueViene) return !marcadoParaCiclo(c.ultimoContacto, proximo.mes, proximo.anio);
+    return false;
   }).length;
 
   shell.badge('cumpleanos', pendientes);
@@ -159,36 +168,46 @@ function sesionVencida() {
 
 /* ── Backend ────────────────────────────────────────────────────────────── */
 
-async function verificarBackend() {
+/**
+ * Se conecta y baja clientes e historial, todo en una sola petición.
+ *
+ * Un corte de red o un timeout NO se anotan en la hoja de Logs: la app sigue
+ * andando con la cache local y el poll vuelve a intentar en un minuto. Antes
+ * cada uno de esos tropiezos dejaba una fila de WARN en la planilla, y con dos
+ * locales arrancando a la vez eso llenaba el registro de ruido que parecía un
+ * problema y no lo era. Lo que sí queda registrado es una sesión rechazada,
+ * que es lo único que necesita que alguien haga algo.
+ */
+async function conectar() {
   if (!navigator.onLine) {
     shell.estadoConexion('offline');
     return;
   }
 
   shell.estadoConexion('conectando');
-  try {
-    await api.ping();
+  const r = await store.arrancar();
+
+  if (r.ok) {
     shell.estadoConexion('ok');
-  } catch (err) {
-    if (err instanceof ErrorSesion) {
-      shell.estadoConexion('error', 'Sesión rechazada');
-      avisar('El servidor no reconoció la sesión. Volvé a entrar.', 'error', 8000);
-      log.error('backend:sesion', err.message);
-      return;
-    }
-    shell.estadoConexion('error');
-    const detalle = err instanceof ErrorApi ? err.message : 'Error inesperado';
-    avisar('Sin conexión con el servidor. Se sigue guardando local. ' + detalle, 'alerta', 6000);
-    log.warn('backend:ping', detalle);
+    return;
   }
+
+  if (r.sesionRechazada) {
+    shell.estadoConexion('error', 'Sesión rechazada');
+    avisar('El servidor no reconoció la sesión. Volvé a entrar.', 'error', 8000);
+    log.error('backend:sesion', r.error);
+    return;
+  }
+
+  shell.estadoConexion('error');
+  avisar('Sin conexión con el servidor. Se sigue guardando local. ' + r.error, 'alerta', 6000);
 }
 
 function vigilarConexion() {
   window.addEventListener('offline', () => shell.estadoConexion('offline'));
   window.addEventListener('online', () => {
     avisar('Conexión restablecida', 'ok');
-    verificarBackend();
-    store.refrescar();
+    conectar();
   });
 }
 

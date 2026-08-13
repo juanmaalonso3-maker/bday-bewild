@@ -4,7 +4,7 @@
  * Feedback no bloqueante. Nunca interrumpe la carga de clientes.
  */
 
-import { TIEMPOS } from './config.js?v=2.1.0';
+import { TIEMPOS } from './config.js?v=2.2.0';
 
 const contenedor = () => document.getElementById('avisos');
 

@@ -5,9 +5,9 @@
  * y los datos de la sesión. No sabe nada de datos de clientes.
  */
 
-import { VERSION, ZONA_HORARIA } from './config.js?v=2.1.0';
-import * as auth from './auth.js?v=2.1.0';
-import * as router from './router.js?v=2.1.0';
+import { VERSION, ZONA_HORARIA } from './config.js?v=2.2.0';
+import * as auth from './auth.js?v=2.2.0';
+import * as router from './router.js?v=2.2.0';
 
 /**
  * Secciones del menú.
@@ -16,7 +16,7 @@ import * as router from './router.js?v=2.1.0';
  */
 export const SECCIONES = [
   { ruta: 'carga',       etiqueta: 'Carga de clientes',  grupo: 'principal', permiso: 'cargar' },
-  { ruta: 'cumpleanos',  etiqueta: 'Cumpleaños del mes', grupo: 'principal', permiso: 'contactar' },
+  { ruta: 'cumpleanos',  etiqueta: 'Cumpleaños',         grupo: 'principal', permiso: 'contactar' },
   { ruta: 'base',        etiqueta: 'Base de datos',      grupo: 'principal', permiso: 'editar' },
   { ruta: 'dashboard',   etiqueta: 'Dashboard',          grupo: 'principal', permiso: 'editar' },
   { ruta: 'logs',        etiqueta: 'Registro',           grupo: 'sistema',   permiso: 'editar' },

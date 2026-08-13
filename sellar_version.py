@@ -10,7 +10,11 @@ Agregando ?v=VERSION a cada import, la URL cambia en cada release y el navegador
 está obligado a bajar todo de nuevo. El servidor ignora el parámetro, así que no
 hay que renombrar ningún archivo.
 
-Uso:  python3 sellar_version.py 2.0.1
+Uso:  python3 sellar_version.py 2.2.0
+
+Es idempotente: correrlo dos veces con la misma versión no cambia nada. Después
+de mezclar archivos de distintas tandas, corrigelo con esto y quedan todos
+sellados igual.
 """
 
 import pathlib

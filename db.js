@@ -6,14 +6,21 @@
  * internet no haga perder un solo cliente.
  *
  * Almacenes:
- *   clientes → la base completa, cacheada
- *   cola     → operaciones pendientes de enviar
- *   logs     → historial local de eventos
- *   meta     → marcadores internos (ej. fecha del último sync)
+ *   clientes  → la base completa, cacheada
+ *   historial → un registro por hecho (alta, contacto, canje de voucher…)
+ *   cola      → operaciones pendientes de enviar
+ *   logs      → historial local de eventos técnicos
+ *   meta      → marcadores internos (ej. fecha del último sync)
  */
 
 const NOMBRE_BD = 'bewild';
-const VERSION_BD = 1;
+
+/**
+ * Versión 2: se agrega el almacén `historial`.
+ * Subir este número dispara `onupgradeneeded` en cada navegador que ya tenía
+ * la base abierta, sin borrar nada de lo que había.
+ */
+const VERSION_BD = 2;
 
 let bd = null;
 
@@ -37,6 +44,12 @@ export function abrir() {
       }
       if (!db.objectStoreNames.contains('meta')) {
         db.createObjectStore('meta', { keyPath: 'clave' });
+      }
+      if (!db.objectStoreNames.contains('historial')) {
+        const almacen = db.createObjectStore('historial', { keyPath: 'eventoId' });
+        // El índice es lo que hace que abrir el historial de una clienta sea
+        // instantáneo aunque la base tenga años de eventos encima.
+        almacen.createIndex('porCliente', 'clienteId', { unique: false });
       }
     };
 
@@ -77,6 +90,17 @@ export const clientes = {
   obtener:  (id)    => conAlmacen('clientes', 'readonly',  a => a.get(id)),
   borrar:   (id)    => conAlmacen('clientes', 'readwrite', a => a.delete(id)),
   vaciar:   ()      => conAlmacen('clientes', 'readwrite', a => a.clear())
+};
+
+/* ── Historial ──────────────────────────────────────────────────────────── */
+
+export const historial = {
+  todos:   ()      => todos('historial'),
+  guardar: (e)     => conAlmacen('historial', 'readwrite', a => a.put(e)),
+  guardarVarios: (lista) => conAlmacen('historial', 'readwrite', a => { lista.forEach(e => a.put(e)); }),
+  porCliente: (clienteId) =>
+    conAlmacen('historial', 'readonly', a => a.index('porCliente').getAll(clienteId)),
+  vaciar:  ()      => conAlmacen('historial', 'readwrite', a => a.clear())
 };
 
 /* ── Cola de sincronización ─────────────────────────────────────────────── */

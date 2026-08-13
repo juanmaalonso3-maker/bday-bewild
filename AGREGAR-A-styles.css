@@ -1,0 +1,296 @@
+/* ==========================================================================
+   VOUCHER, HISTORIAL Y NAVEGACIÓN POR MES
+   Agregado en la versión 2.2.0.
+
+   ESTO NO ES UN styles.css COMPLETO.
+   Es el bloque que hay que PEGAR AL FINAL de tu styles.css original.
+   ========================================================================== */
+
+/* ── Selector de mes ────────────────────────────────────────────────────── */
+.mes-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  padding-bottom: var(--e3);
+  border-bottom: 1px solid var(--negro);
+  margin-bottom: var(--e4);
+}
+
+.mes-nav__flecha {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  border: 1px solid var(--borde-fuerte);
+  background: var(--blanco);
+  color: var(--texto-suave);
+  transition: all var(--transicion);
+}
+
+.mes-nav__flecha:hover {
+  border-color: var(--negro);
+  background: var(--negro);
+  color: var(--blanco);
+}
+
+.mes-nav__centro {
+  display: flex;
+  align-items: baseline;
+  gap: var(--e3);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.mes-nav__titulo {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.mes-nav__hoy { margin-left: auto; flex: 0 0 auto; }
+
+/* Un mes que no es el actual se marca para que nadie crea que está mirando hoy. */
+.mes-nav:has(.mes-nav__hoy:not([hidden])) .mes-nav__titulo { color: var(--alerta); }
+
+@media (max-width: 700px) {
+  .mes-nav { flex-wrap: wrap; }
+  .mes-nav__hoy { margin-left: 0; width: 100%; }
+}
+
+/* ── Estados de cumpleaños ──────────────────────────────────────────────── */
+/* "Adelantar": el mes todavía no llegó, no es una deuda sino trabajo futuro. */
+.chip[data-estado-cumple="proximo"] {
+  color: var(--texto-suave);
+  border-color: var(--borde-fuerte);
+  border-style: dashed;
+}
+
+/* ── Checkboxes de la tabla ─────────────────────────────────────────────── */
+.check-contacto,
+.check-voucher {
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  accent-color: var(--negro);
+}
+
+.check-voucher { accent-color: var(--ok); }
+
+/* ── Ojito de historial ─────────────────────────────────────────────────── */
+.boton-icono--ojo {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* ── Modal ancho (historial) ────────────────────────────────────────────── */
+.modal__caja--ancha {
+  max-width: 620px;
+  max-height: 86vh;
+  overflow-y: auto;
+}
+
+.modal__sub {
+  font-size: 12px;
+  color: var(--texto-suave);
+  margin-bottom: var(--e4);
+}
+
+/* ── Registrar canje retroactivo ────────────────────────────────────────── */
+.canje {
+  border: 1px solid var(--borde);
+  background: var(--fondo);
+  padding: var(--e4);
+  margin-bottom: var(--e5);
+}
+
+.canje__titulo {
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: var(--e1);
+}
+
+.canje__ayuda {
+  font-size: 12px;
+  color: var(--texto-suave);
+  margin-bottom: var(--e3);
+}
+
+.canje__fila {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  flex-wrap: wrap;
+}
+
+.canje__fila .entrada { width: auto; flex: 0 0 auto; }
+
+/* ── Línea de tiempo del historial ──────────────────────────────────────── */
+.linea-tiempo {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--borde);
+  margin-bottom: var(--e5);
+}
+
+.hito {
+  display: flex;
+  gap: var(--e4);
+  padding: var(--e3) 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.hito__fecha {
+  flex: 0 0 84px;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.hito__dia {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hito__anio {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--texto-tenue);
+}
+
+.hito__cuerpo { min-width: 0; }
+
+.hito__que {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hito__detalle {
+  font-size: 12px;
+  color: var(--texto-suave);
+  margin-top: 2px;
+}
+
+.hito__quien {
+  font-size: 11px;
+  color: var(--texto-tenue);
+  margin-top: 2px;
+  word-break: break-word;
+}
+
+/* Un borde de color a la izquierda hace que los canjes salten a la vista
+   cuando el historial tiene muchos renglones. */
+.hito[data-tipo="voucher"]  { border-left: 3px solid var(--ok); padding-left: var(--e3); }
+.hito[data-tipo="contacto"] { border-left: 3px solid var(--negro); padding-left: var(--e3); }
+.hito[data-tipo="baja"]     { border-left: 3px solid var(--error); padding-left: var(--e3); }
+.hito[data-tipo="voucher-deshecho"],
+.hito[data-tipo="contacto-deshecho"] { opacity: 0.6; }
+
+/* ── Indicadores: ahora son cinco ───────────────────────────────────────── */
+.indicadores { grid-template-columns: repeat(5, 1fr); }
+
+.indicador__nota {
+  font-size: 11px;
+  color: var(--texto-tenue);
+  margin-top: -2px;
+}
+
+.indicador--destacado .indicador__nota { color: rgba(255, 255, 255, 0.55); }
+
+/* El mes que viene es aviso, no urgencia: se distingue sin gritar. */
+.indicador--proximo { border-color: var(--negro); border-style: dashed; }
+
+@media (max-width: 1400px) {
+  .indicadores { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ── Panel de campaña del mes ───────────────────────────────────────────── */
+.campana { margin-bottom: var(--e5); }
+
+.campana__cifras {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--e4);
+  margin-bottom: var(--e5);
+}
+
+.campana__cifra {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  padding-left: var(--e3);
+  border-left: 2px solid var(--borde);
+}
+
+.campana__cifra--destacada { border-left-color: var(--negro); }
+
+.campana__valor {
+  font-family: var(--display);
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+
+.campana__rotulo {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  font-weight: 600;
+}
+
+.campana__barras { display: flex; flex-direction: column; gap: var(--e3); }
+
+.campana__linea {
+  display: grid;
+  grid-template-columns: 120px 1fr 90px;
+  align-items: center;
+  gap: var(--e3);
+}
+
+.campana__etiqueta {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  font-weight: 600;
+}
+
+.campana__pista {
+  height: 14px;
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+}
+
+.campana__relleno { height: 100%; }
+.campana__relleno--contacto { background: var(--negro); }
+.campana__relleno--voucher  { background: var(--ok); }
+
+.campana__cuenta {
+  font-size: 12px;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+@media (max-width: 700px) {
+  .campana__cifras { grid-template-columns: 1fr; gap: var(--e3); }
+  .campana__linea { grid-template-columns: 1fr; gap: var(--e1); }
+  .campana__cuenta { text-align: left; }
+}
+
+/* ── Gráfico de meses: se marca también el mes que viene ────────────────── */
+.barra-mes--proximo .barra-mes__relleno { background: var(--texto-suave); }
+.barra-mes--proximo .barra-mes__nombre  { color: var(--texto); font-weight: 600; }

@@ -10,10 +10,11 @@
  * la base local y la API.
  */
 
-import { cola, clientes as almacenClientes, meta, nuevoId } from './db.js?v=2.1.0';
-import { api } from './api.js?v=2.1.0';
-import { TIEMPOS } from './config.js?v=2.1.0';
-import { log } from './logger.js?v=2.1.0';
+import { cola, clientes as almacenClientes, historial as almacenHistorial,
+         meta, nuevoId } from './db.js?v=2.2.0';
+import { api } from './api.js?v=2.2.0';
+import { TIEMPOS } from './config.js?v=2.2.0';
+import { log } from './logger.js?v=2.2.0';
 
 const TAMANO_TANDA = 25;
 const LATIDO = 3000;
@@ -52,7 +53,7 @@ async function emitir(evento) {
  * Deja una operación lista para enviar. Devuelve enseguida: el envío ocurre
  * después, en segundo plano.
  *
- * @param {'alta'|'edicion'|'baja'|'contacto'} tipo
+ * @param {'alta'|'edicion'|'baja'|'contacto'|'voucher'} tipo
  * @param {Object} payload
  * @param {string} [clienteId]
  */
@@ -154,13 +155,17 @@ async function marcarCliente(id, estado) {
  * Trae del servidor lo que cambió desde la última vez. No pisa clientes que
  * tengan operaciones sin enviar: lo local siempre gana hasta que se sincroniza.
  *
- * @returns {Promise<{recibidos:number}>}
+ * Los eventos de historial vienen en la misma llamada pero con su propio
+ * marcador, y no tienen conflicto posible: son hechos, nunca se editan.
+ *
+ * @returns {Promise<{recibidos:number, eventos:number, masEventos:boolean}>}
  */
 export async function traerCambios() {
-  if (!navigator.onLine) return { recibidos: 0 };
+  if (!navigator.onLine) return { recibidos: 0, eventos: 0, masEventos: false };
 
   const desde = await meta.leer('ultimaSync', null);
-  const data = await api.listar(desde);
+  const desdeHist = await meta.leer('ultimaSyncHist', null);
+  const data = await api.listar(desde, desdeHist);
 
   const enCola = new Set((await cola.todas()).map(op => op.clienteId));
   const aGuardar = data.clientes
@@ -170,13 +175,28 @@ export async function traerCambios() {
   if (aGuardar.length) await almacenClientes.guardarVarios(aGuardar);
   await meta.escribir('ultimaSync', data.servidorEn);
 
-  if (aGuardar.length) await emitir({ tipo: 'descarga', recibidos: aGuardar.length });
-  return { recibidos: aGuardar.length, clientes: aGuardar };
+  const eventos = data.eventos || [];
+  if (eventos.length) await almacenHistorial.guardarVarios(eventos);
+  if (data.servidorEnHist) await meta.escribir('ultimaSyncHist', data.servidorEnHist);
+
+  if (aGuardar.length || eventos.length) {
+    await emitir({ tipo: 'descarga', recibidos: aGuardar.length, eventos: eventos.length });
+  }
+
+  return {
+    recibidos: aGuardar.length,
+    clientes: aGuardar,
+    eventos: eventos.length,
+    // El servidor corta las tandas grandes: si quedó historial por bajar, el
+    // store vuelve a pedir enseguida en vez de esperar al próximo minuto.
+    masEventos: !!data.masEventos
+  };
 }
 
-/** Fuerza una descarga completa, ignorando el marcador incremental. */
+/** Fuerza una descarga completa, ignorando los marcadores incrementales. */
 export async function recargarTodo() {
   await meta.escribir('ultimaSync', null);
+  await meta.escribir('ultimaSyncHist', null);
   return traerCambios();
 }
 

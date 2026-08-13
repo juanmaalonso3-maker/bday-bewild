@@ -10,7 +10,7 @@
  *   - Fechas de sistema:   texto ISO "aaaa-mm-dd".
  */
 
-import { ZONA_HORARIA } from './config.js?v=2.1.0';
+import { ZONA_HORARIA } from './config.js?v=2.2.0';
 
 export const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -97,7 +97,7 @@ export function esBisiesto(anio) {
  *
  * @param {{dia:number, mes:number}} nacimiento
  * @returns {{dia:number, mes:number, anio:number, iso:string, esteMes:boolean,
- *            yaPaso:boolean, faltan:number, esHoy:boolean}}
+ *            mesQueViene:boolean, yaPaso:boolean, faltan:number, esHoy:boolean}}
  */
 export function proximoCumple(nacimiento) {
   const hoy = hoyPartes();
@@ -117,6 +117,8 @@ export function proximoCumple(nacimiento) {
   const hoyFecha = new Date(hoy.anio, hoy.mes - 1, hoy.dia);
   const faltan = Math.round((fecha - hoyFecha) / 86400000);
 
+  const siguiente = mesSiguiente(hoy.mes, hoy.anio);
+
   return {
     dia: diaFinal,
     mes,
@@ -124,10 +126,81 @@ export function proximoCumple(nacimiento) {
     iso: `${anio}-${dos(mes)}-${dos(diaFinal)}`,
     // "Este mes" es el mes calendario en curso, sin importar si ya pasó el día.
     esteMes: mes === hoy.mes,
+    // "El mes que viene" es el mes calendario siguiente: son los que hay que
+    // ir contactando por adelantado.
+    mesQueViene: mes === siguiente.mes,
     yaPaso: yaPasoEsteAnio,
     faltan,
     esHoy: faltan === 0
   };
+}
+
+/* ── Navegación por meses ───────────────────────────────────────────────── */
+
+/** El mes siguiente a (mes, anio), con el año corrido si hace falta. */
+export function mesSiguiente(mes, anio) {
+  return mes === 12 ? { mes: 1, anio: anio + 1 } : { mes: mes + 1, anio };
+}
+
+/** El mes anterior a (mes, anio). */
+export function mesAnterior(mes, anio) {
+  return mes === 1 ? { mes: 12, anio: anio - 1 } : { mes: mes - 1, anio };
+}
+
+/** "Septiembre 2026" — para el encabezado del selector de mes. */
+export function textoMesAnio(mes, anio) {
+  const nombre = MESES[mes - 1];
+  return `${nombre.charAt(0).toUpperCase()}${nombre.slice(1)} ${anio}`;
+}
+
+/**
+ * Compara dos meses. Devuelve -1 si (a) es anterior, 0 si es el mismo, 1 si
+ * es posterior. Sirve para saber si el mes que se está mirando ya pasó.
+ */
+export function compararMeses(mesA, anioA, mesB, anioB) {
+  const a = anioA * 12 + mesA;
+  const b = anioB * 12 + mesB;
+  return a === b ? 0 : (a < b ? -1 : 1);
+}
+
+/* ── Ciclos de cumpleaños ───────────────────────────────────────────────── */
+
+/**
+ * ¿El contacto (o el canje) que quedó registrado corresponde al cumpleaños de
+ * `mes` del año `anio`?
+ *
+ * La regla es el año calendario, igual que siempre: lo que se hizo en 2026
+ * cuenta para los cumpleaños de 2026 y el 1° de enero se reinicia solo.
+ *
+ * Con una excepción: a los cumpleaños de enero se los adelanta en diciembre.
+ * Sin esta salvedad, todo lo que se marcara en diciembre se borraría de la
+ * vista justo el 1° de enero, que es cuando hace falta.
+ *
+ * @param {string} fechaISO  aaaa-mm-dd (vacío = nunca)
+ * @param {number} mes       mes del cumpleaños
+ * @param {number} anio      año del ciclo que se está mirando
+ */
+export function marcadoParaCiclo(fechaISO, mes, anio) {
+  const texto = String(fechaISO || '');
+  if (texto.length < 7) return false;
+
+  const a = Number(texto.slice(0, 4));
+  const m = Number(texto.slice(5, 7));
+  if (!a || !m) return false;
+
+  if (a === anio) return true;
+  return mes === 1 && a === anio - 1 && m === 12;
+}
+
+/**
+ * Año del ciclo de cumpleaños que está en juego hoy para alguien que cumple
+ * en `mes`. Es el año en curso, salvo los de enero durante diciembre: a esos
+ * ya se los está trabajando para el año que viene.
+ */
+export function cicloVigente(mes) {
+  const hoy = hoyPartes();
+  if (mes === 1 && hoy.mes === 12) return hoy.anio + 1;
+  return hoy.anio;
 }
 
 /**
@@ -156,6 +229,21 @@ export function textoDiaMes(dia, mes) {
 /** Nombre del mes en curso. */
 export function mesActual() {
   return MESES[hoyPartes().mes - 1];
+}
+
+/** Nombre del mes que viene. */
+export function mesProximo() {
+  const hoy = hoyPartes();
+  return MESES[mesSiguiente(hoy.mes, hoy.anio).mes - 1];
+}
+
+/**
+ * "13/08/2026" a partir de un ISO. Vacío si no hay fecha.
+ * Se usa en el historial, donde se lee de un vistazo mejor que el ISO.
+ */
+export function textoFechaCorta(iso) {
+  const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
 }
 
 /**

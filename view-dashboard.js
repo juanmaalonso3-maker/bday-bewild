@@ -3,11 +3,19 @@
  * ----------------------------------------------------------------------------
  * Indicadores del día y un panorama del mes. Todo se calcula en el navegador a
  * partir del estado ya cargado, así que no hace ni una llamada al servidor.
+ *
+ * La pregunta que tiene que contestar de un vistazo es doble:
+ *   1. ¿A quién hay que escribirle hoy y a quién conviene ir adelantando?
+ *   2. De todo lo que escribimos este mes, ¿cuántas vinieron a usar el voucher?
+ * Lo segundo es lo único que dice si la campaña sirve o si estamos mandando
+ * mensajes al vacío.
  */
 
-import * as store from './store.js?v=2.1.0';
-import * as router from './router.js?v=2.1.0';
-import { hoyISO, hoyPartes, mesActual, MESES } from './utils-fecha.js?v=2.1.0';
+import * as store from './store.js?v=2.2.0';
+import * as router from './router.js?v=2.2.0';
+import { irAlMes } from './view-cumpleanos.js?v=2.2.0';
+import { hoyISO, hoyPartes, mesActual, mesProximo, mesSiguiente,
+         marcadoParaCiclo, MESES } from './utils-fecha.js?v=2.2.0';
 
 let desuscribir = null;
 
@@ -31,8 +39,19 @@ function metricas() {
   const clientes = store.listar();
   const hoy = hoyISO();
   const partes = hoyPartes();
+  const proximo = mesSiguiente(partes.mes, partes.anio);
 
   const delMes = clientes.filter(c => c.cumple && c.cumple.esteMes);
+
+  // Los del mes que viene se evalúan contra SU ciclo, no contra el de hoy: a
+  // alguien que cumple en septiembre lo podemos haber contactado en agosto y
+  // eso ya cuenta como hecho.
+  const delProximo = clientes.filter(c => c.cumple && c.cumple.mesQueViene);
+  const proximoSinContactar = delProximo
+    .filter(c => !marcadoParaCiclo(c.ultimoContacto, proximo.mes, proximo.anio)).length;
+
+  const contactadasMes = delMes.filter(c => c.contactado).length;
+  const vouchersMes = delMes.filter(c => c.voucherUsado).length;
 
   return {
     total: clientes.length,
@@ -41,6 +60,15 @@ function metricas() {
     contactadasHoy: clientes.filter(c => c.ultimoContacto === hoy).length,
     pendientesMes: delMes.filter(c => !c.contactado).length,
     totalMes: delMes.length,
+
+    proximo,
+    totalProximo: delProximo.length,
+    proximoSinContactar,
+
+    contactadasMes,
+    vouchersMes,
+    vouchersHoy: clientes.filter(c => c.ultimoVoucher === hoy).length,
+
     altasPorDia: altasUltimos30(clientes),
     porMes: cumplesPorMes(clientes)
   };
@@ -84,11 +112,18 @@ function pintar() {
 
   contenedor.innerHTML = `
     <div class="indicadores">
-      ${indicador('Clientes agregados hoy', m.altasHoy, '')}
-      ${indicador('A contactar hoy', m.aContactarHoy, m.aContactarHoy ? 'destacado' : '')}
-      ${indicador('Contactadas hoy', m.contactadasHoy, '')}
-      ${indicador('Pendientes de ' + mesActual(), m.pendientesMes, m.pendientesMes ? 'alerta' : '')}
+      ${indicador('Clientes agregados hoy', m.altasHoy, '', '')}
+      ${indicador('A contactar hoy', m.aContactarHoy, m.aContactarHoy ? 'destacado' : '', '', 'mes-actual')}
+      ${indicador('Contactadas hoy', m.contactadasHoy, '', m.vouchersHoy ? `${m.vouchersHoy} usaron el voucher hoy` : '')}
+      ${indicador('Pendientes de ' + mesActual(), m.pendientesMes, m.pendientesMes ? 'alerta' : '',
+                  `${m.totalMes} ${m.totalMes === 1 ? 'cumpleaños' : 'cumpleaños'} en el mes`, 'mes-actual')}
+      ${indicador('A contactar de ' + mesProximo(), m.proximoSinContactar,
+                  m.proximoSinContactar ? 'proximo' : '',
+                  `${m.totalProximo} ${m.totalProximo === 1 ? 'cumple' : 'cumplen'} el mes que viene`,
+                  'mes-proximo')}
     </div>
+
+    ${panelCampana(m)}
 
     <div class="paneles">
       <section class="tarjeta">
@@ -105,18 +140,92 @@ function pintar() {
       </section>
     </div>`;
 
-  const tarjeta = contenedor.querySelector('[data-ir="cumpleanos"]');
-  if (tarjeta) tarjeta.addEventListener('click', () => router.ir('cumpleanos'));
+  contenedor.querySelectorAll('[data-ir]').forEach(el => {
+    el.addEventListener('click', () => abrirMes(el.dataset.ir));
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrirMes(el.dataset.ir); }
+    });
+  });
 }
 
-function indicador(titulo, valor, tono) {
-  const clicable = titulo.startsWith('A contactar') || titulo.startsWith('Pendientes');
+function abrirMes(cual) {
+  const hoy = hoyPartes();
+  if (cual === 'mes-proximo') {
+    const p = mesSiguiente(hoy.mes, hoy.anio);
+    return irAlMes(p.mes, p.anio);
+  }
+  if (cual === 'mes-actual') return irAlMes(hoy.mes, hoy.anio);
+  router.ir('cumpleanos');
+}
+
+function indicador(titulo, valor, tono, nota, destino) {
   return `
     <div class="indicador ${tono ? 'indicador--' + tono : ''}"
-         ${clicable ? 'data-ir="cumpleanos" role="button" tabindex="0"' : ''}>
+         ${destino ? `data-ir="${destino}" role="button" tabindex="0"` : ''}>
       <span class="indicador__valor">${valor}</span>
       <span class="indicador__titulo">${titulo}</span>
+      ${nota ? `<span class="indicador__nota">${nota}</span>` : ''}
     </div>`;
+}
+
+/**
+ * El panel que importa: de los cumpleaños de este mes, a cuántas les
+ * escribimos y cuántas terminaron usando el voucher.
+ *
+ * La conversión se mide sobre las contactadas, no sobre el total del mes: si
+ * a alguien nunca le escribimos, que no haya venido no dice nada del voucher.
+ */
+function panelCampana(m) {
+  const conversion = m.contactadasMes
+    ? Math.round((m.vouchersMes / m.contactadasMes) * 100)
+    : 0;
+
+  const anchoContacto = m.totalMes ? (m.contactadasMes / m.totalMes) * 100 : 0;
+  const anchoVoucher  = m.totalMes ? (m.vouchersMes / m.totalMes) * 100 : 0;
+
+  return `
+    <section class="tarjeta campana">
+      <h2 class="seccion-titulo">
+        Campaña de ${mesActual()}
+        <span class="seccion-titulo__cuenta">${m.totalMes} ${m.totalMes === 1 ? 'cumpleaños' : 'cumpleaños'} en el mes</span>
+      </h2>
+
+      ${!m.totalMes ? `
+        <p class="vacio__texto">No hay cumpleaños cargados para este mes.</p>
+      ` : `
+        <div class="campana__cifras">
+          <div class="campana__cifra">
+            <span class="campana__valor">${m.contactadasMes}</span>
+            <span class="campana__rotulo">contactadas</span>
+          </div>
+          <div class="campana__cifra">
+            <span class="campana__valor">${m.vouchersMes}</span>
+            <span class="campana__rotulo">usaron el voucher</span>
+          </div>
+          <div class="campana__cifra campana__cifra--destacada">
+            <span class="campana__valor">${conversion}%</span>
+            <span class="campana__rotulo">de las contactadas vino</span>
+          </div>
+        </div>
+
+        <div class="campana__barras">
+          <div class="campana__linea">
+            <span class="campana__etiqueta">Contactadas</span>
+            <div class="campana__pista">
+              <div class="campana__relleno campana__relleno--contacto" style="width:${anchoContacto}%"></div>
+            </div>
+            <span class="campana__cuenta">${m.contactadasMes} de ${m.totalMes}</span>
+          </div>
+          <div class="campana__linea">
+            <span class="campana__etiqueta">Usaron voucher</span>
+            <div class="campana__pista">
+              <div class="campana__relleno campana__relleno--voucher" style="width:${anchoVoucher}%"></div>
+            </div>
+            <span class="campana__cuenta">${m.vouchersMes} de ${m.totalMes}</span>
+          </div>
+        </div>
+      `}
+    </section>`;
 }
 
 /** Gráfico de barras en SVG, sin librerías. */
@@ -149,12 +258,14 @@ function grafico(datos) {
 
 function graficoMeses(meses) {
   const maximo = Math.max(1, ...meses);
-  const actual = hoyPartes().mes - 1;
+  const hoy = hoyPartes();
+  const actual = hoy.mes - 1;
+  const siguiente = mesSiguiente(hoy.mes, hoy.anio).mes - 1;
 
   return `
     <div class="barras-mes">
       ${meses.map((cantidad, i) => `
-        <div class="barra-mes ${i === actual ? 'barra-mes--actual' : ''}">
+        <div class="barra-mes ${i === actual ? 'barra-mes--actual' : ''}${i === siguiente ? ' barra-mes--proximo' : ''}">
           <div class="barra-mes__valor">${cantidad || ''}</div>
           <div class="barra-mes__caja">
             <div class="barra-mes__relleno" style="height:${(cantidad / maximo) * 100}%"></div>

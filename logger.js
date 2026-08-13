@@ -9,10 +9,10 @@
  * El logger nunca hace fallar una operación: si no puede escribir, se calla.
  */
 
-import { logs as almacenLogs } from './db.js?v=2.1.0';
-import { api } from './api.js?v=2.1.0';
-import { ahoraISO } from './utils-fecha.js?v=2.1.0';
-import * as auth from './auth.js?v=2.1.0';
+import { logs as almacenLogs } from './db.js?v=2.2.0';
+import { api } from './api.js?v=2.2.0';
+import { ahoraISO } from './utils-fecha.js?v=2.2.0';
+import * as auth from './auth.js?v=2.2.0';
 
 const MAXIMO_LOCAL = 1000;
 const TAMANO_TANDA = 10;

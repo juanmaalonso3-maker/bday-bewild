@@ -9,7 +9,7 @@
 export const API_URL =
   'https://script.google.com/macros/s/AKfycbyl_vTVc7UpkRYWr5fi3KUV4VuPIZ0ne-X9NBceadU0snmjManufwlv5epp1eE_wJEV/exec';
 
-export const VERSION = '2.1.0';
+export const VERSION = '2.2.0';
 
 /**
  * ID de cliente OAuth de Google.
@@ -43,9 +43,24 @@ export const USUARIOS = [
   { email: 'bw.oeste@bewild.com.ar',  rol: 'OPERADOR', sucursal: 'OESTE', etiqueta: 'Lanús Oeste' }
 ];
 
-/** Tiempos, en milisegundos. */
+/**
+ * Tiempos, en milisegundos.
+ *
+ * Sobre los dos timeouts: Apps Script no es un servidor que esté siempre
+ * caliente. La primera llamada del día levanta el proyecto y abre la planilla,
+ * y eso solo puede llevarse varios segundos. Además todas las ejecuciones
+ * corren bajo la misma cuenta, así que si los dos locales abren la app a la vez
+ * hacen cola entre ellos.
+ *
+ * Con un único timeout de 20s para todo, esa cola se cortaba sola y llenaba la
+ * hoja de Logs de "El servidor tardó demasiado en responder" sin que hubiera
+ * nada roto. Ahora las lecturas grandes esperan más y las escrituras chicas
+ * siguen cortando rápido, que es donde sí conviene reintentar.
+ */
 export const TIEMPOS = {
-  timeoutPeticion: 20000,   // corta una petición colgada
+  timeoutPeticion: 20000,   // escrituras y llamadas cortas
+  timeoutLectura:  60000,   // descarga de clientes e historial
+  reintentoRed:    2000,    // espera antes del reintento silencioso
   pollRefresco:    60000,   // pull incremental con la pestaña visible
   reintentos:      [2000, 5000, 15000, 60000, 300000],
   duracionAviso:   3500
