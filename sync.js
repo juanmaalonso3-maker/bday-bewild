@@ -11,10 +11,10 @@
  */
 
 import { cola, clientes as almacenClientes, historial as almacenHistorial,
-         meta, nuevoId } from './db.js?v=2.2.0';
-import { api } from './api.js?v=2.2.0';
-import { TIEMPOS } from './config.js?v=2.2.0';
-import { log } from './logger.js?v=2.2.0';
+         meta, nuevoId } from './db.js?v=2.3.0';
+import { api } from './api.js?v=2.3.0';
+import { TIEMPOS } from './config.js?v=2.3.0';
+import { log } from './logger.js?v=2.3.0';
 
 const TAMANO_TANDA = 25;
 const LATIDO = 3000;

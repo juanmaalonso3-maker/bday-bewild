@@ -16,7 +16,7 @@
  * entrar, y cuando vence se pide uno nuevo sin intervención del usuario.
  */
 
-import { CLIENT_ID, USUARIOS, CLAVES } from './config.js?v=2.2.0';
+import { CLIENT_ID, USUARIOS, CLAVES } from './config.js?v=2.3.0';
 
 const GIS_URL = 'https://accounts.google.com/gsi/client';
 

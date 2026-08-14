@@ -1,0 +1,404 @@
+/* ==========================================================================
+   BE WILD · Estilos agregados a partir de 2.2.0
+   --------------------------------------------------------------------------
+   Archivo aparte, enlazado desde index.html DESPUÉS de styles.css.
+
+   Va separado a propósito: antes esto era un bloque que había que pegar al
+   final de styles.css, y al reponer los archivos se perdió. Como archivo
+   propio se copia y se sube como cualquier otro, y no depende de que nadie
+   se acuerde de pegar nada.
+
+   Usa los tokens (--negro, --e4, --display…) que define styles.css.
+   ========================================================================== */
+
+/* ══ Selector de mes ═══════════════════════════════════════════════════════
+   Los doce meses siempre a la vista, con cuántos cumpleaños tiene cada uno.
+   Un clic para ir a cualquiera, sin menús ni flechas repetidas.            */
+
+.selector-mes {
+  display: flex;
+  align-items: center;
+  gap: var(--e4);
+  flex-wrap: wrap;
+  padding-bottom: var(--e4);
+  border-bottom: 1px solid var(--negro);
+  margin-bottom: var(--e4);
+}
+
+.selector-mes__anio {
+  display: flex;
+  align-items: center;
+  gap: var(--e1);
+  flex: 0 0 auto;
+}
+
+.selector-mes__flecha {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  line-height: 1;
+  border: 1px solid var(--borde-fuerte);
+  background: var(--blanco);
+  color: var(--texto-suave);
+  transition: all var(--transicion);
+}
+
+.selector-mes__flecha:hover {
+  border-color: var(--negro);
+  background: var(--negro);
+  color: var(--blanco);
+}
+
+.selector-mes__valor {
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  min-width: 4ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.selector-mes__tira {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 3px;
+  flex: 1 1 520px;
+  min-width: 0;
+}
+
+.selector-mes__hoy {
+  flex: 0 0 auto;
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border: 1px solid var(--negro);
+  background: var(--blanco);
+  color: var(--texto);
+  transition: all var(--transicion);
+}
+
+.selector-mes__hoy:hover { background: var(--negro); color: var(--blanco); }
+
+/* ── Cada mes de la tira ────────────────────────────────────────────────── */
+.mes-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 7px 2px 5px;
+  border: 1px solid var(--borde);
+  background: var(--blanco);
+  color: var(--texto-suave);
+  transition: all var(--transicion);
+  min-width: 0;
+}
+
+.mes-chip:hover {
+  border-color: var(--negro);
+  color: var(--texto);
+}
+
+.mes-chip__nombre {
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mes-chip__cuenta {
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--texto-tenue);
+}
+
+.mes-chip--activo {
+  background: var(--negro);
+  border-color: var(--negro);
+  color: var(--blanco);
+}
+
+.mes-chip--activo .mes-chip__cuenta { color: rgba(255, 255, 255, 0.65); }
+
+/* El mes en curso queda señalado aunque estés parado en otro. */
+.mes-chip--hoy { border-color: var(--negro); }
+.mes-chip--hoy .mes-chip__nombre { color: var(--texto); }
+
+/* El que viene, punteado: es aviso de trabajo próximo, no urgencia. */
+.mes-chip--proximo { border-color: var(--borde-fuerte); border-style: dashed; }
+
+@media (max-width: 900px) {
+  .selector-mes__tira { grid-template-columns: repeat(6, minmax(0, 1fr)); flex-basis: 100%; }
+}
+
+/* ── Resumen del mes, debajo de los filtros ─────────────────────────────── */
+.resumen-mes {
+  display: flex;
+  gap: var(--e5);
+  flex-wrap: wrap;
+  padding-bottom: var(--e3);
+  margin-bottom: var(--e2);
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+.resumen-mes strong {
+  font-family: var(--display);
+  font-size: 17px;
+  color: var(--texto);
+  margin-right: 3px;
+}
+
+/* ══ Tabla de cumpleaños ═══════════════════════════════════════════════════ */
+
+/* "Adelantar": el mes todavía no llegó. No es deuda, es trabajo futuro. */
+.chip[data-estado-cumple="proximo"] {
+  color: var(--texto-suave);
+  border-color: var(--borde-fuerte);
+  border-style: dashed;
+}
+
+/**
+ * Fila ya resuelta.
+ *
+ * Al marcar "contactado" la fila NO desaparece: se tacha y se apaga, pero
+ * sigue ahí. Así ves qué acabás de hacer y podés destildar si te equivocaste.
+ */
+.fila--hecha { background: var(--fondo); }
+
+.fila--hecha td { color: var(--texto-tenue); }
+
+.fila--hecha .dia,
+.fila--hecha strong {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  color: var(--texto-tenue);
+  font-weight: 500;
+}
+
+.fila--hecha .chip { opacity: 0.75; }
+.fila--hecha .boton--wpp { opacity: 0.6; }
+.fila--hecha:hover { background: var(--blanco); }
+.fila--hecha:hover td { color: var(--texto-suave); }
+
+.check-contacto,
+.check-voucher {
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  accent-color: var(--negro);
+}
+
+.check-voucher { accent-color: var(--ok); }
+
+/* ══ Dashboard ═════════════════════════════════════════════════════════════ */
+
+.indicadores { grid-template-columns: repeat(5, 1fr); }
+
+.indicador__nota {
+  font-size: 11px;
+  color: var(--texto-tenue);
+  margin-top: -2px;
+}
+
+.indicador--destacado .indicador__nota { color: rgba(255, 255, 255, 0.55); }
+
+.indicador--ok { border-color: var(--ok); }
+.indicador--ok .indicador__valor { color: var(--ok); }
+
+/* El mes que viene es aviso, no urgencia: se distingue sin gritar. */
+.indicador--proximo { border-color: var(--negro); border-style: dashed; }
+
+@media (max-width: 1400px) { .indicadores { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 820px)  { .indicadores { grid-template-columns: repeat(2, 1fr); } }
+
+.barra-mes--proximo .barra-mes__relleno { background: var(--texto-suave); }
+.barra-mes--proximo .barra-mes__nombre  { color: var(--texto); font-weight: 600; }
+
+/* ══ Historial del cliente ═════════════════════════════════════════════════ */
+
+.historial {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: var(--e4);
+  align-items: start;
+}
+
+.historial__buscador { position: sticky; top: var(--e4); }
+
+.historial__ficha { display: flex; flex-direction: column; gap: var(--e4); }
+
+@media (max-width: 1000px) {
+  .historial { grid-template-columns: 1fr; }
+  .historial__buscador { position: static; }
+}
+
+/* ── Resultados de la búsqueda ──────────────────────────────────────────── */
+.resultados {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--e3);
+  max-height: 60vh;
+  overflow-y: auto;
+  border-top: 1px solid var(--borde);
+}
+
+.resultado {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: var(--e2) var(--e2);
+  border: 0;
+  border-bottom: 1px solid var(--borde);
+  background: var(--blanco);
+  text-align: left;
+  transition: background var(--transicion);
+}
+
+.resultado:hover { background: var(--fondo); }
+
+.resultado--activo {
+  background: var(--negro);
+  color: var(--blanco);
+}
+
+/* El seleccionado también recibe hover, y sin esta regla el fondo se aclaraba
+   dejando texto blanco sobre gris: ilegible justo en la fila que estás usando. */
+.resultado--activo:hover { background: var(--negro-suave); }
+
+.resultado--activo .resultado__dato { color: rgba(255, 255, 255, 0.6); }
+
+.resultado__nombre { font-size: 13px; font-weight: 600; }
+.resultado__dato   { font-size: 11px; color: var(--texto-tenue); }
+
+/* ── Ficha ──────────────────────────────────────────────────────────────── */
+.ficha__cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--e4);
+  padding-bottom: var(--e4);
+  border-bottom: 1px solid var(--negro);
+  margin-bottom: var(--e4);
+}
+
+.ficha__nombre {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.ficha__sub {
+  font-size: 12px;
+  color: var(--texto-suave);
+  margin-top: var(--e1);
+}
+
+.ficha__datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--e4) var(--e5);
+}
+
+.ficha__dato { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.ficha__rotulo {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--texto-tenue);
+  font-weight: 600;
+}
+
+.ficha__valor {
+  font-size: 13px;
+  color: var(--texto);
+  word-break: break-word;
+}
+
+/* ── Registrar un canje ─────────────────────────────────────────────────── */
+.canje__ayuda {
+  font-size: 12px;
+  color: var(--texto-suave);
+  margin-bottom: var(--e3);
+  max-width: 62ch;
+}
+
+.canje__fila {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  flex-wrap: wrap;
+}
+
+.canje__fila .entrada { width: auto; flex: 0 0 auto; }
+
+/* ── Línea de tiempo ────────────────────────────────────────────────────── */
+.linea-tiempo {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--borde);
+}
+
+.hito {
+  display: flex;
+  gap: var(--e4);
+  padding: var(--e3) 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.hito__fecha {
+  flex: 0 0 90px;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.hito__dia {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hito__anio {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--texto-tenue);
+}
+
+.hito__cuerpo { min-width: 0; }
+.hito__que    { font-size: 13px; font-weight: 600; }
+
+.hito__detalle {
+  font-size: 12px;
+  color: var(--texto-suave);
+  margin-top: 2px;
+}
+
+.hito__quien {
+  font-size: 11px;
+  color: var(--texto-tenue);
+  margin-top: 2px;
+  word-break: break-word;
+}
+
+/* Un borde de color a la izquierda hace que los canjes salten a la vista
+   cuando el historial tiene muchos renglones. */
+.hito[data-tipo="voucher"]  { border-left: 3px solid var(--ok);    padding-left: var(--e3); }
+.hito[data-tipo="contacto"] { border-left: 3px solid var(--negro); padding-left: var(--e3); }
+.hito[data-tipo="baja"]     { border-left: 3px solid var(--error); padding-left: var(--e3); }
+.hito[data-tipo="voucher-deshecho"],
+.hito[data-tipo="contacto-deshecho"] { opacity: 0.6; }

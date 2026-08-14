@@ -59,6 +59,8 @@ def sellar(version):
     texto = html.read_text(encoding='utf-8')
     texto = re.sub(r'href="styles\.css(\?v=[^"]*)?"',
                    f'href="styles.css?v={version}"', texto)
+    texto = re.sub(r'href="estilos-nuevos\.css(\?v=[^"]*)?"',
+                   f'href="estilos-nuevos.css?v={version}"', texto)
     texto = re.sub(r'src="app\.js(\?v=[^"]*)?"',
                    f'src="app.js?v={version}"', texto)
     html.write_text(texto, encoding='utf-8')

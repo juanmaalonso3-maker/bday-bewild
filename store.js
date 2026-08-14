@@ -15,13 +15,13 @@
  * cómo se llegó hasta acá, año por año.
  */
 
-import { clientes as almacen, historial as almacenHistorial, nuevoId } from './db.js?v=2.2.0';
-import * as sync from './sync.js?v=2.2.0';
-import { log } from './logger.js?v=2.2.0';
+import { clientes as almacen, historial as almacenHistorial, nuevoId } from './db.js?v=2.3.0';
+import * as sync from './sync.js?v=2.3.0';
+import { log } from './logger.js?v=2.3.0';
 import { ahoraISO, hoyISO, parseFechaNac, proximoCumple, marcadoParaCiclo,
-         cicloVigente, normalizarFechaHora, normalizarFecha } from './utils-fecha.js?v=2.2.0';
-import { normalizar } from './utils-telefono.js?v=2.2.0';
-import * as auth from './auth.js?v=2.2.0';
+         cicloVigente, normalizarFechaHora, normalizarFecha } from './utils-fecha.js?v=2.3.0';
+import { normalizar } from './utils-telefono.js?v=2.3.0';
+import * as auth from './auth.js?v=2.3.0';
 
 /** @type {Map<string, Object>} */
 const memoria = new Map();

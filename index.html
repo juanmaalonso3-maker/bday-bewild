@@ -15,7 +15,10 @@
     significa que los archivos .js tampoco están al lado de este archivo.
     En vez de mostrar una página rota sin explicación, se avisa qué pasó.
   -->
-  <link rel="stylesheet" href="styles.css?v=2.2.0" onerror="window.__faltanArchivos = true">
+  <link rel="stylesheet" href="styles.css?v=2.3.0" onerror="window.__faltanArchivos = true">
+  <!-- Los estilos agregados a partir de 2.2.0 viven en su propio archivo: así no
+       hay que pegar nada al final de styles.css y no se pierden en una copia. -->
+  <link rel="stylesheet" href="estilos-nuevos.css?v=2.3.0">
   <script>
     window.addEventListener('DOMContentLoaded', function () {
       if (!window.__faltanArchivos) return;
@@ -106,6 +109,6 @@
   <!-- Avisos flotantes -->
   <div class="avisos" id="avisos" aria-live="polite"></div>
 
-  <script type="module" src="app.js?v=2.2.0"></script>
+  <script type="module" src="app.js?v=2.3.0"></script>
 </body>
 </html>

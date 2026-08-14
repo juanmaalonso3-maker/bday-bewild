@@ -1,31 +1,33 @@
 /**
  * BE WILD · Vista "Cumpleaños"
  * ----------------------------------------------------------------------------
- * Muestra los cumpleaños de un mes, ordenados por día, con un selector para
- * moverse a cualquier mes: ‹ agosto 2026 ›. Arranca siempre en el mes en curso.
+ * Los cumpleaños de un mes, ordenados por día, con los doce meses del año
+ * siempre a la vista arriba para saltar a cualquiera de un solo clic. Debajo
+ * de cada mes va cuántos cumpleaños tiene, así se ve de un vistazo dónde está
+ * el trabajo.
  *
  * El mes que viene es tan importante como el actual: a los cumpleaños de
  * septiembre conviene empezar a contactarlos en agosto, así el saludo y el
  * voucher llegan antes y no el mismo día a las corridas.
  *
- * Estados posibles, según el mes que se esté mirando:
+ * Estados, según el mes que se esté mirando:
  *   Pendiente   → mes en curso, todavía no llegó el día, sin contactar
  *   Atrasado    → el día ya pasó (o el mes ya pasó) y nadie lo contactó
  *   Adelantar   → mes futuro, sin contactar: es lo que hay que ir haciendo
  *   Contactado  → ya recibió el saludo en este ciclo
  *
- * Cada fila tiene dos marcas independientes: "Contactado" (le escribimos) y
+ * Dos marcas independientes por fila: "Contactado" (le escribimos) y
  * "Usó voucher" (vino y lo canjeó). La segunda es la que dice si la campaña
  * sirvió de algo.
  */
 
-import * as store from './store.js?v=2.2.0';
-import * as router from './router.js?v=2.2.0';
-import * as plantilla from './plantilla.js?v=2.2.0';
-import { avisar } from './ui-avisos.js?v=2.2.0';
-import { mostrar, linkWhatsApp, normalizar } from './utils-telefono.js?v=2.2.0';
-import { textoMesAnio, hoyPartes, mesSiguiente, mesAnterior, compararMeses,
-         marcadoParaCiclo, esBisiesto, textoFechaCorta } from './utils-fecha.js?v=2.2.0';
+import * as store from './store.js?v=2.3.0';
+import * as router from './router.js?v=2.3.0';
+import * as plantilla from './plantilla.js?v=2.3.0';
+import { avisar } from './ui-avisos.js?v=2.3.0';
+import { mostrar, linkWhatsApp, normalizar } from './utils-telefono.js?v=2.3.0';
+import { MESES, hoyPartes, compararMeses, marcadoParaCiclo, esBisiesto,
+         textoFechaCorta } from './utils-fecha.js?v=2.3.0';
 
 let desuscribir = null;
 let filtro = 'pendientes'; // 'pendientes' | 'todos'
@@ -33,7 +35,16 @@ let filtro = 'pendientes'; // 'pendientes' | 'todos'
 /** Mes que se está mirando. Se conserva al ir y volver dentro de la sesión. */
 let vista = null;
 
-/** Deja la vista posicionada en el mes en curso. */
+/**
+ * Clientas marcadas recién, en esta pasada.
+ *
+ * Sin esto, tildar "contactado" con el filtro "A contactar" puesto hace que la
+ * fila desaparezca de golpe: perdés de vista a quién acabás de marcar y, si te
+ * equivocaste, no tenés cómo destildarlo. Se quedan visibles —tachadas y
+ * apagadas— hasta que cambies de mes o de filtro.
+ */
+let recienMarcadas = new Set();
+
 function mesEnCurso() {
   const hoy = hoyPartes();
   return { mes: hoy.mes, anio: hoy.anio };
@@ -46,6 +57,7 @@ function mesEnCurso() {
 export function irAlMes(mes, anio) {
   vista = { mes, anio };
   filtro = 'pendientes';
+  recienMarcadas = new Set();
   router.ir('cumpleanos');
   pintar();
 }
@@ -55,8 +67,8 @@ export default {
 
   render(contenedor) {
     if (!vista) vista = mesEnCurso();
-    contenedor.innerHTML = plantillaHtml();
-    conectarControles();
+    recienMarcadas = new Set();
+    contenedor.innerHTML = estructura();
     desuscribir = store.suscribir(pintar);
     plantilla.cargar();
   },
@@ -67,24 +79,14 @@ export default {
   }
 };
 
+const $ = id => document.getElementById(id);
+
 /* ── Estructura ─────────────────────────────────────────────────────────── */
 
-function plantillaHtml() {
+function estructura() {
   return `
   <section class="tarjeta">
-    <div class="mes-nav">
-      <button class="mes-nav__flecha" id="mes-anterior" type="button"
-              aria-label="Mes anterior">‹</button>
-      <div class="mes-nav__centro">
-        <h2 class="mes-nav__titulo" id="mes-titulo">—</h2>
-        <span class="seccion-titulo__cuenta" id="cuenta-cumples"></span>
-      </div>
-      <button class="mes-nav__flecha" id="mes-siguiente" type="button"
-              aria-label="Mes siguiente">›</button>
-      <button class="boton boton--chico mes-nav__hoy" id="mes-hoy" type="button" hidden>
-        Volver al mes actual
-      </button>
-    </div>
+    <div id="selector-mes"></div>
 
     <div class="filtros">
       <button class="filtro" data-filtro="pendientes" type="button">A contactar</button>
@@ -96,44 +98,93 @@ function plantillaHtml() {
   </section>`;
 }
 
-const $ = id => document.getElementById(id);
+/* ── Selector de mes ────────────────────────────────────────────────────── */
 
-function conectarControles() {
-  document.querySelectorAll('.filtro').forEach(btn => {
+/** Cuántos cumpleaños tiene cada mes del año. */
+function cumplesPorMes() {
+  const conteo = Array(12).fill(0);
+  store.listar().forEach(c => {
+    if (c.nacimiento && c.nacimiento.valida) conteo[c.nacimiento.mes - 1]++;
+  });
+  return conteo;
+}
+
+function pintarSelector() {
+  const caja = $('selector-mes');
+  if (!caja) return;
+
+  const hoy = hoyPartes();
+  const conteo = cumplesPorMes();
+
+  const meses = MESES.map((nombre, i) => {
+    const mes = i + 1;
+    const activo = mes === vista.mes;
+    const esHoy = mes === hoy.mes && vista.anio === hoy.anio;
+    const esProximo = compararMeses(mes, vista.anio, hoy.mes, hoy.anio) === 1 &&
+                      compararMeses(mes, vista.anio, hoy.mes + 1, hoy.anio) === 0;
+
+    const clases = ['mes-chip'];
+    if (activo) clases.push('mes-chip--activo');
+    if (esHoy && !activo) clases.push('mes-chip--hoy');
+    if (esProximo && !activo) clases.push('mes-chip--proximo');
+
+    return `
+      <button type="button" class="${clases.join(' ')}" data-mes="${mes}"
+              aria-pressed="${activo}" title="${nombre} ${vista.anio}">
+        <span class="mes-chip__nombre">${nombre.slice(0, 3)}</span>
+        <span class="mes-chip__cuenta">${conteo[i] || '·'}</span>
+      </button>`;
+  }).join('');
+
+  caja.innerHTML = `
+    <div class="selector-mes">
+      <div class="selector-mes__anio">
+        <button class="selector-mes__flecha" data-anio="-1" type="button"
+                aria-label="Año anterior">‹</button>
+        <span class="selector-mes__valor">${vista.anio}</span>
+        <button class="selector-mes__flecha" data-anio="1" type="button"
+                aria-label="Año siguiente">›</button>
+      </div>
+      <div class="selector-mes__tira" role="group" aria-label="Elegir mes">${meses}</div>
+      <button class="selector-mes__hoy" id="btn-hoy" type="button" hidden>Hoy</button>
+    </div>`;
+
+  caja.querySelectorAll('[data-mes]').forEach(btn => {
     btn.addEventListener('click', () => {
-      filtro = btn.dataset.filtro;
+      vista = { ...vista, mes: Number(btn.dataset.mes) };
+      recienMarcadas = new Set();
       pintar();
     });
   });
 
-  $('mes-anterior').addEventListener('click', () => {
-    vista = mesAnterior(vista.mes, vista.anio);
-    pintar();
+  caja.querySelectorAll('[data-anio]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      vista = { ...vista, anio: vista.anio + Number(btn.dataset.anio) };
+      recienMarcadas = new Set();
+      pintar();
+    });
   });
 
-  $('mes-siguiente').addEventListener('click', () => {
-    vista = mesSiguiente(vista.mes, vista.anio);
-    pintar();
-  });
-
-  $('mes-hoy').addEventListener('click', () => {
+  const enCurso = vista.mes === hoy.mes && vista.anio === hoy.anio;
+  const botonHoy = $('btn-hoy');
+  botonHoy.hidden = enCurso;
+  botonHoy.addEventListener('click', () => {
     vista = mesEnCurso();
+    recienMarcadas = new Set();
     pintar();
   });
 }
 
 /* ── Datos ──────────────────────────────────────────────────────────────── */
 
-/**
- * Cumpleaños del mes que se está mirando, ordenados por día.
- * El 29/02 se muestra como 28/02 en los años que no son bisiestos.
- */
+/** Cumpleaños del mes que se está mirando, ordenados por día. */
 function delMes() {
   const { mes, anio } = vista;
 
   return store.listar()
     .filter(c => c.nacimiento && c.nacimiento.valida && c.nacimiento.mes === mes)
     .map(c => {
+      // El 29/02 se muestra como 28/02 en los años que no son bisiestos.
       const dia = (mes === 2 && c.nacimiento.dia === 29 && !esBisiesto(anio))
         ? 28
         : c.nacimiento.dia;
@@ -172,29 +223,35 @@ function pintar() {
   const contenedor = $('tabla-cumples');
   if (!contenedor) return;
 
+  pintarSelector();
+
   const hoy = hoyPartes();
   const relacion = compararMeses(vista.mes, vista.anio, hoy.mes, hoy.anio);
-
-  $('mes-titulo').textContent = textoMesAnio(vista.mes, vista.anio);
-  $('mes-hoy').hidden = relacion === 0;
 
   const todos = delMes();
   const porContactar = todos.filter(c => c.estado !== 'contactado');
   const conVoucher = todos.filter(c => c.voucherEnMes).length;
-  const lista = filtro === 'todos' ? todos : porContactar;
+
+  // Con el filtro "A contactar" se muestran las pendientes MÁS las que se
+  // acaban de marcar, para que la fila no se evapore debajo del cursor.
+  const lista = filtro === 'todos'
+    ? todos
+    : todos.filter(c => c.estado !== 'contactado' || recienMarcadas.has(c.id));
 
   document.querySelectorAll('.filtro').forEach(btn => {
     btn.classList.toggle('filtro--activo', btn.dataset.filtro === filtro);
+    btn.onclick = () => {
+      filtro = btn.dataset.filtro;
+      recienMarcadas = new Set();
+      pintar();
+    };
   });
-
-  $('cuenta-cumples').textContent = todos.length
-    ? `${todos.length} en el mes · ${porContactar.length} sin contactar · ${conVoucher} ${conVoucher === 1 ? 'usó' : 'usaron'} el voucher`
-    : '';
 
   $('nota-filtro').textContent = notaDelMes(todos, relacion);
 
   if (!lista.length) {
     contenedor.innerHTML = `
+      <div class="resumen-mes">${resumen(todos.length, porContactar.length, conVoucher)}</div>
       <div class="vacio vacio--chico">
         <p class="vacio__texto">${textoVacio(todos.length, relacion)}</p>
       </div>`;
@@ -202,6 +259,7 @@ function pintar() {
   }
 
   contenedor.innerHTML = `
+    <div class="resumen-mes">${resumen(todos.length, porContactar.length, conVoucher)}</div>
     <table class="tabla tabla--cumples">
       <thead>
         <tr>
@@ -221,15 +279,21 @@ function pintar() {
   conectarFilas();
 }
 
+function resumen(total, sinContactar, conVoucher) {
+  if (!total) return '';
+  return `
+    <span><strong>${total}</strong> en el mes</span>
+    <span><strong>${sinContactar}</strong> sin contactar</span>
+    <span><strong>${conVoucher}</strong> ${conVoucher === 1 ? 'usó' : 'usaron'} el voucher</span>`;
+}
+
 /** El renglón de contexto debajo de los filtros. */
 function notaDelMes(todos, relacion) {
   if (!todos.length) return '';
 
   if (relacion > 0) {
     const faltan = todos.filter(c => !c.contactadoEnMes).length;
-    return faltan
-      ? `${faltan} para ir adelantando este mes`
-      : 'Ya están todos adelantados';
+    return faltan ? `${faltan} para ir adelantando este mes` : 'Ya están todos adelantados';
   }
 
   const atrasados = todos.filter(c => c.estado === 'atrasado').length;
@@ -258,8 +322,12 @@ function fila(c) {
 
   const cumpleAnios = c.nacimiento.anio ? vista.anio - c.nacimiento.anio : null;
 
+  const clases = [];
+  if (esHoy) clases.push('fila--hoy');
+  if (c.contactadoEnMes) clases.push('fila--hecha');
+
   return `
-    <tr data-estado="${c.estado}"${esHoy ? ' class="fila--hoy"' : ''}>
+    <tr data-estado="${c.estado}"${clases.length ? ` class="${clases.join(' ')}"` : ''}>
       <td class="tabla__numero">
         <span class="dia">${c.dia}</span>
         ${esHoy ? '<span class="etiqueta-hoy">hoy</span>' : ''}
@@ -300,9 +368,14 @@ function conectarFilas() {
 
   document.querySelectorAll('[data-contacto]').forEach(chk => {
     chk.addEventListener('change', async e => {
+      const id = chk.dataset.contacto;
+      // Se anota ANTES de guardar: el repintado llega enseguida y la fila
+      // tiene que seguir en pantalla, no desaparecer.
+      if (e.target.checked) recienMarcadas.add(id);
       try {
-        await store.marcarContacto(chk.dataset.contacto, e.target.checked);
+        await store.marcarContacto(id, e.target.checked);
       } catch (err) {
+        recienMarcadas.delete(id);
         avisar('No se pudo marcar: ' + err.message, 'error');
         e.target.checked = !e.target.checked;
       }
@@ -311,9 +384,11 @@ function conectarFilas() {
 
   document.querySelectorAll('[data-voucher]').forEach(chk => {
     chk.addEventListener('change', async e => {
+      const id = chk.dataset.voucher;
       const marcado = e.target.checked;
+      if (marcado) recienMarcadas.add(id);
       try {
-        await store.marcarVoucher(chk.dataset.voucher, marcado);
+        await store.marcarVoucher(id, marcado);
         if (marcado) avisar('Voucher registrado', 'ok');
       } catch (err) {
         avisar('No se pudo registrar el voucher: ' + err.message, 'error');
@@ -325,7 +400,7 @@ function conectarFilas() {
 
 /**
  * Abre el chat con el mensaje ya escrito y marca el contacto en el mismo paso.
- * Si el operador se arrepiente, puede destildar el checkbox.
+ * Si el operador se arrepiente, puede destildar el checkbox: la fila sigue ahí.
  */
 async function abrirWhatsApp(id) {
   const cliente = store.obtener(id);
@@ -342,10 +417,12 @@ async function abrirWhatsApp(id) {
 
   const yaContactado = marcadoParaCiclo(cliente.ultimoContacto, vista.mes, vista.anio);
   if (!yaContactado) {
+    recienMarcadas.add(id);
     try {
       await store.marcarContacto(id, true);
       avisar(`${cliente.nombreCompleto} marcado como contactado`, 'ok');
     } catch (err) {
+      recienMarcadas.delete(id);
       avisar('Se abrió el chat pero no se pudo marcar: ' + err.message, 'alerta', 6000);
     }
   }

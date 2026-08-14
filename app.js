@@ -12,24 +12,25 @@
  * anterior dando vueltas en memoria.
  */
 
-import { TIEMPOS } from './config.js?v=2.2.0';
-import * as router from './router.js?v=2.2.0';
-import * as shell from './ui-shell.js?v=2.2.0';
-import * as auth from './auth.js?v=2.2.0';
-import { avisar } from './ui-avisos.js?v=2.2.0';
-import * as store from './store.js?v=2.2.0';
-import * as sync from './sync.js?v=2.2.0';
-import { log } from './logger.js?v=2.2.0';
-import { hoyPartes, mesSiguiente, marcadoParaCiclo } from './utils-fecha.js?v=2.2.0';
+import { TIEMPOS } from './config.js?v=2.3.0';
+import * as router from './router.js?v=2.3.0';
+import * as shell from './ui-shell.js?v=2.3.0';
+import * as auth from './auth.js?v=2.3.0';
+import { avisar } from './ui-avisos.js?v=2.3.0';
+import * as store from './store.js?v=2.3.0';
+import * as sync from './sync.js?v=2.3.0';
+import { log } from './logger.js?v=2.3.0';
+import { hoyPartes, mesSiguiente, marcadoParaCiclo } from './utils-fecha.js?v=2.3.0';
 
-import carga      from './view-carga.js?v=2.2.0';
-import cumpleanos from './view-cumpleanos.js?v=2.2.0';
-import base       from './view-base.js?v=2.2.0';
-import dashboard  from './view-dashboard.js?v=2.2.0';
-import logs       from './view-logs.js?v=2.2.0';
-import ajustes    from './view-ajustes.js?v=2.2.0';
+import carga      from './view-carga.js?v=2.3.0';
+import cumpleanos from './view-cumpleanos.js?v=2.3.0';
+import base       from './view-base.js?v=2.3.0';
+import historial  from './view-historial.js?v=2.3.0';
+import dashboard  from './view-dashboard.js?v=2.3.0';
+import logs       from './view-logs.js?v=2.3.0';
+import ajustes    from './view-ajustes.js?v=2.3.0';
 
-const VISTAS = { carga, cumpleanos, base, dashboard, logs, ajustes };
+const VISTAS = { carga, cumpleanos, base, historial, dashboard, logs, ajustes };
 
 let montada = false;
 

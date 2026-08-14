@@ -9,7 +9,7 @@
 export const API_URL =
   'https://script.google.com/macros/s/AKfycbyl_vTVc7UpkRYWr5fi3KUV4VuPIZ0ne-X9NBceadU0snmjManufwlv5epp1eE_wJEV/exec';
 
-export const VERSION = '2.2.0';
+export const VERSION = '2.3.0';
 
 /**
  * ID de cliente OAuth de Google.
